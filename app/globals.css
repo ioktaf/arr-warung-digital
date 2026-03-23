@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4efe5;
+  --foreground: #1f2218;
+  --card: rgba(255, 252, 246, 0.8);
+  --card-foreground: #1f2218;
+  --muted: #5e6352;
+  --muted-soft: #d8ddc7;
+  --line: rgba(31, 34, 24, 0.1);
+  --brand: #0f766e;
+  --brand-strong: #115e59;
+  --accent: #d97706;
+  --accent-soft: #fcd34d;
+  --success: #15803d;
+  --danger: #b91c1c;
+  --font-sans: "Segoe UI", "Trebuchet MS", sans-serif;
+  --font-display: "Bahnschrift", "Franklin Gothic Medium", sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(252, 211, 77, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.18), transparent 24%),
+    linear-gradient(180deg, #faf5ec 0%, #f4efe5 55%, #eef3e6 100%);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(15, 118, 110, 0.85);
+  color: #fffdf7;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), sans-serif;
+  }
+}
+
+.surface {
+  border: 1px solid var(--line);
+  background: var(--card);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 24px 60px rgba(41, 53, 45, 0.12);
+}
+
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(31, 34, 24, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 34, 24, 0.04) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
