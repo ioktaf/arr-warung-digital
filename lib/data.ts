@@ -21,7 +21,7 @@ import {
   hasServiceRoleSupabaseEnv,
 } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { slugify } from "@/lib/utils";
+import { normalizeWhatsappNumber, slugify } from "@/lib/utils";
 import type {
   Order,
   OrderItem,
@@ -82,6 +82,8 @@ type StoreSettingsRow = {
   brand_tagline?: string | null;
   header_status_badge?: string | null;
   header_nav_labels?: unknown;
+  contact_whatsapp_number?: string | null;
+  contact_whatsapp_label?: string | null;
   footer_description?: string | null;
   footer_link_labels?: unknown;
   demo_banner_text?: string | null;
@@ -301,6 +303,8 @@ function mapStoreSettings(row: StoreSettingsRow): StoreSettings {
         row.header_nav_labels,
         defaultStoreSettings.headerNavLabels,
       ),
+      contactWhatsappNumber: row.contact_whatsapp_number ?? undefined,
+      contactWhatsappLabel: row.contact_whatsapp_label ?? undefined,
       footerDescription: row.footer_description ?? undefined,
       footerLinkLabels: normalizeTextListValue(
         row.footer_link_labels,
@@ -387,6 +391,8 @@ function toStoreSettingsRowPayload(input: StoreSettingsInput) {
     brand_tagline: normalized.brandTagline,
     header_status_badge: normalized.headerStatusBadge,
     header_nav_labels: normalized.headerNavLabels,
+    contact_whatsapp_number: normalized.contactWhatsappNumber || null,
+    contact_whatsapp_label: normalized.contactWhatsappLabel,
     footer_description: normalized.footerDescription,
     footer_link_labels: normalized.footerLinkLabels,
     demo_banner_text: normalized.demoBannerText,
@@ -1118,6 +1124,26 @@ export async function getCheckoutOrder(orderId: string) {
   const order = mapOrder(data as OrderRow);
   order.proofImgUrl = await resolveProofImageUrl(order.proofImgUrl);
   return order;
+}
+
+export async function getTrackableOrder(reference: string, buyerWa: string) {
+  const normalizedReference = reference.trim().replace(/^#/, "").toLowerCase();
+  const normalizedBuyerWa = normalizeWhatsappNumber(buyerWa);
+
+  if (!normalizedReference || !normalizedBuyerWa) {
+    return null;
+  }
+
+  const orders = await getAdminOrders();
+
+  return (
+    orders.find((order) => {
+      return (
+        order.id.toLowerCase().startsWith(normalizedReference) &&
+        normalizeWhatsappNumber(order.buyerWa) === normalizedBuyerWa
+      );
+    }) ?? null
+  );
 }
 
 export async function getAdminOrders() {

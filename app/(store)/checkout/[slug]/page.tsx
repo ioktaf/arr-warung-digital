@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clock3,
-  ShieldCheck,
   Upload,
   WalletCards,
 } from "lucide-react";
@@ -21,7 +20,6 @@ import {
   getOrderStatusMeta,
 } from "@/lib/format";
 import { getQrisImageDataUrl } from "@/lib/payment";
-import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
 import {
   formatWhatsappDisplay,
   getFirstValue,
@@ -101,7 +99,6 @@ export default async function CheckoutPage({
   const error = getFirstValue(query.error);
   const success = getFirstValue(query.success);
   const step = getFirstValue(query.step);
-  const demoMode = getFirstValue(query.demo) === "1" || !hasServiceRoleSupabaseEnv();
 
   const status: OrderStatus =
     order?.status ?? (step === "awaiting-verification" ? "awaiting_verification" : "pending");
@@ -109,6 +106,11 @@ export default async function CheckoutPage({
   const buyerReady = Boolean(buyerName && normalizedBuyerWa);
   const progress = progressLabels[status];
   const quantity = order?.totalQuantity ?? requestedQuantity;
+  const paymentCheckoutDescription =
+    settings.paymentCheckoutDescription ===
+    "Base QRIS merchant tetap sama, tapi nominal QR akan mengikuti total order dan sudah termasuk kode unik untuk bantu admin cek mutasi."
+      ? "Scan QRIS berikut dan transfer sesuai total yang tampil. Nominal sudah otomatis menyesuaikan order kamu."
+      : settings.paymentCheckoutDescription;
   const uniqueCode =
     order?.uniqueCode ??
     (Number.isFinite(uniqueCodeFromQuery) && uniqueCodeFromQuery > 0
@@ -134,9 +136,6 @@ export default async function CheckoutPage({
           <ArrowLeft className="h-4 w-4" />
           Kembali ke katalog
         </Link>
-        <Badge tone={demoMode ? "accent" : "brand"}>
-          {demoMode ? "Demo Checkout" : "Live Checkout"}
-        </Badge>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
@@ -305,7 +304,7 @@ export default async function CheckoutPage({
                       {settings.paymentCheckoutTitle}
                     </h2>
                     <p className="text-sm leading-7 text-muted">
-                      {settings.paymentCheckoutDescription}
+                      {paymentCheckoutDescription}
                     </p>
                   </div>
                 </div>
@@ -354,15 +353,12 @@ export default async function CheckoutPage({
                           <p>Seat dipilih: {quantity} seat</p>
                           <p>Kode unik: {formatUniqueCode(uniqueCode)}</p>
                           <p>
-                            Base QRIS merchant {settings.paymentMerchantName} tetap sama,
-                            tapi nominal di QR mengikuti total akhir di atas.
+                            Scan QRIS lalu transfer sesuai total akhir di atas.
                           </p>
                         </div>
                       ) : (
                         <p className="mt-3 text-sm leading-7 text-muted">
-                          Base QRIS merchant {settings.paymentMerchantName} tetap sama.
-                          Buyer cukup scan QR, lalu transfer sesuai nominal yang tampil
-                          di halaman ini.
+                          Scan QRIS, lalu transfer sesuai nominal yang tampil di halaman ini.
                         </p>
                       )}
                     </div>
@@ -507,26 +503,6 @@ export default async function CheckoutPage({
             </div>
           </Card>
 
-          <Card className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-success/10 p-3 text-success">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">{settings.operationalNotesTitle}</h2>
-                <p className="text-sm leading-7 text-muted">
-                  {settings.operationalNotesDescription}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3 text-sm leading-7 text-muted">
-              {settings.operationalNotesLines.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-            </div>
-          </Card>
-
           {order ? (
             <Card className="space-y-4">
               <h2 className="text-2xl font-bold">{settings.orderSnapshotTitle}</h2>
@@ -552,6 +528,17 @@ export default async function CheckoutPage({
                 <div>
                   <p className="text-sm text-muted">Order Ref</p>
                   <p className="mt-1 font-semibold">#{order.id.slice(0, 8)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted">Lacak Order</p>
+                  <Link
+                    href={`/track?ref=${order.id.slice(0, 8)}&wa=${encodeURIComponent(
+                      normalizedBuyerWa,
+                    )}`}
+                    className="mt-1 inline-flex text-sm font-semibold text-brand transition hover:text-brand-strong"
+                  >
+                    Buka halaman lacak order
+                  </Link>
                 </div>
                 <div>
                   <p className="text-sm text-muted">Created At</p>

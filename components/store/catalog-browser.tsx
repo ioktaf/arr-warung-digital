@@ -41,8 +41,8 @@ export function CatalogBrowser({ products }: CatalogBrowserProps) {
           <div>
             <Badge tone="accent">Filter Katalog</Badge>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-              Pakai filter kategori atau cari nama produk biar katalog yang
-              panjang tetap cepat dipindai.
+              Gunakan pencarian atau filter kategori supaya produk yang kamu cari
+              lebih cepat ketemu.
             </p>
           </div>
 

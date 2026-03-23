@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { SiteBrand } from "@/components/layout/site-brand";
 import { CartLink } from "@/components/store/cart-link";
-import { Badge } from "@/components/ui/badge";
+import { formatWhatsappHref, normalizeWhatsappNumber } from "@/lib/utils";
 import type { StoreSettings } from "@/types/domain";
 
 type SiteHeaderProps = {
@@ -10,10 +10,27 @@ type SiteHeaderProps = {
 };
 
 export function SiteHeader({ settings }: SiteHeaderProps) {
+  const brandTagline =
+    settings.brandTagline === "Guest checkout, QRIS, manual mutation check"
+      ? "Belanja akun digital jadi lebih cepat, simpel, dan nyaman."
+      : settings.brandTagline;
+  const hasWhatsappContact = Boolean(
+    normalizeWhatsappNumber(settings.contactWhatsappNumber),
+  );
+  const contactHref = hasWhatsappContact
+    ? formatWhatsappHref(settings.contactWhatsappNumber)
+    : "/track";
+  const [productsLabel, workflowLabel, faqLabel] = settings.headerNavLabels;
   const links = [
-    { href: "/#produk", label: settings.headerNavLabels[0] },
-    { href: "/#cara-kerja", label: settings.headerNavLabels[1] },
-    { href: "/admin", label: settings.headerNavLabels[2] },
+    { href: "/#produk", label: productsLabel || "Produk" },
+    { href: "/#cara-order", label: workflowLabel || "Cara Order" },
+    { href: "/#faq", label: faqLabel || "FAQ" },
+    { href: "/track", label: "Lacak Order" },
+    {
+      href: contactHref,
+      label: settings.contactWhatsappLabel || "Kontak WhatsApp",
+      external: hasWhatsappContact,
+    },
   ];
 
   return (
@@ -27,7 +44,7 @@ export function SiteHeader({ settings }: SiteHeaderProps) {
             logoUrl={settings.brandLogoUrl}
             title={settings.brandName}
             compactTitle={settings.brandCompactName}
-            subtitle={settings.brandTagline}
+            subtitle={brandTagline}
           />
         </Link>
 
@@ -37,17 +54,41 @@ export function SiteHeader({ settings }: SiteHeaderProps) {
               <Link
                 key={link.href}
                 href={link.href}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noreferrer" : undefined}
                 className="rounded-full px-4 py-2 text-sm font-medium text-muted transition hover:bg-white/60 hover:text-foreground"
               >
                 {link.label}
               </Link>
             ))}
-            <Badge tone="accent">{settings.headerStatusBadge}</Badge>
           </nav>
 
           <CartLink />
         </div>
       </div>
+
+      <div className="border-t border-line/60 md:hidden">
+        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:px-6 lg:px-8">
+          {links.map((link) => (
+            <Link
+              key={`mobile-${link.href}`}
+              href={link.href}
+              target={link.external ? "_blank" : undefined}
+              rel={link.external ? "noreferrer" : undefined}
+              className="whitespace-nowrap rounded-full border border-line bg-white/70 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <Link
+        href="/admin"
+        className="sr-only"
+      >
+        Admin
+      </Link>
     </header>
   );
 }

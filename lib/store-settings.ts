@@ -28,21 +28,21 @@ const defaultWorkflowSteps: StoreWorkflowStep[] = [
 ];
 
 const defaultStackHighlights = [
-  "Next.js App Router untuk storefront dan dashboard admin",
-  "Supabase PostgreSQL + Storage untuk order dan bukti bayar",
-  "Realtime-ready untuk notif order masuk",
-  "Deploy ringan di Vercel dengan env Supabase",
+  "Checkout cepat tanpa perlu bikin akun",
+  "QRIS langsung tampil dengan nominal order yang sesuai",
+  "Bisa pilih jumlah seat sesuai kebutuhan",
+  "Status order tetap bisa dilacak setelah pembayaran",
 ];
 
 const defaultDashboardNotes = [
-  "Order baru masuk ke Pending saat buyer submit data checkout.",
-  "Saat buyer klik konfirmasi bayar, order naik ke Awaiting Verification.",
-  "Admin cek mutasi manual, lalu update status ke Paid dan Completed.",
+  "Produk aktif bisa langsung dibeli dari katalog.",
+  "Keranjang cocok untuk checkout beberapa produk sekaligus.",
+  "Upload bukti bayar membantu proses verifikasi lebih cepat.",
 ];
 
 const defaultPaymentInstructionLines = [
   "Scan QRIS merchant ARR WARUNG DIGITAL.",
-  "Perhatikan total transfer di halaman checkout karena nominal ini sudah termasuk kode unik.",
+  "Perhatikan total transfer di halaman checkout karena nominal ini sudah menyesuaikan order kamu.",
   "Transfer sesuai total akhir, bukan harga dasar produk.",
   "Kembali ke halaman ini lalu klik konfirmasi bayar.",
   "Upload bukti transfer kalau ada biar admin lebih cepat cek.",
@@ -50,67 +50,68 @@ const defaultPaymentInstructionLines = [
 
 const defaultHeaderNavLabels = [
   "Produk",
-  "Alur Semi-Auto",
-  "Dashboard Admin",
+  "Cara Order",
+  "FAQ",
 ];
 
 const defaultFooterLinkLabels = [
-  "Storefront",
-  "Admin",
-  "Checkout Demo",
+  "Produk",
+  "Lacak Order",
+  "FAQ",
 ];
 
 const defaultOperationalNotesLines = [
-  "Admin tidak perlu mantengin mutasi tanpa konteks karena order masuk ke dashboard lebih dulu.",
-  "Proof upload bersifat opsional, tapi sangat membantu saat nominal order mirip-mirip.",
-  "Kalau nanti mau full-auto, struktur tabel order dan payment proof ini masih enak untuk ditingkatkan.",
+  "Gunakan WhatsApp aktif supaya admin mudah menghubungi kamu setelah pembayaran terverifikasi.",
+  "Simpan order ref setelah checkout selesai dibuat.",
+  "Kalau ada kendala, hubungi admin lewat WhatsApp agar dibantu lebih cepat.",
 ];
 
 export const defaultStoreSettingsInput: StoreSettingsInput = {
   brandName: "ARR Warung Digital",
   brandCompactName: "Warung Digital",
   brandLogoUrl: "",
-  brandTagline: "Guest checkout, QRIS, manual mutation check",
-  headerStatusBadge: "Semi-Auto",
+  brandTagline: "Belanja akun digital jadi lebih cepat, simpel, dan nyaman.",
+  headerStatusBadge: "",
   headerNavLabels: defaultHeaderNavLabels,
+  contactWhatsappNumber: "",
+  contactWhatsappLabel: "Kontak WhatsApp",
   footerDescription:
-    "Fondasi MVP untuk jualan akun digital dengan verifikasi pembayaran manual yang tetap rapi.",
+    "Pilih produk, tentukan seat, bayar via QRIS, lalu tunggu admin kirim aksesmu.",
   footerLinkLabels: defaultFooterLinkLabels,
-  demoBannerText:
-    "Mode demo aktif. Isi `.env.local` dan jalankan `supabase/schema.sql` di Supabase SQL Editor untuk workflow live.",
-  heroBadge: "Storefront MVP",
+  demoBannerText: "",
+  heroBadge: "Belanja Lebih Cepat",
   heroTitle:
-    "Jualan produk digital dengan checkout cepat, QRIS, dan verifikasi mutasi manual yang tetap terasa modern.",
+    "Produk digital favoritmu, checkout cepat, dan proses bayar yang mudah dipahami.",
   heroDescription:
-    "Buyer bisa checkout tanpa login, admin dapat notifikasi order yang perlu dicek, dan semua fondasinya sudah disiapkan buat nyambung ke Supabase.",
+    "Pilih produk, atur jumlah seat, scan QRIS, lalu kirim konfirmasi bayar. Kami bantu terus sampai akses diterima.",
   heroPrimaryCtaLabel: "Lihat Produk",
-  heroSecondaryCtaLabel: "Buka Dashboard Admin",
-  workflowBadge: "Alur Semi-Auto",
-  workflowTitle: "Buyer simpel, admin tetap pegang kendali.",
+  heroSecondaryCtaLabel: "Lacak Order",
+  workflowBadge: "Cara Order",
+  workflowTitle: "Tiga langkah singkat, langsung beres.",
   workflowDescription:
-    "Flow ini sengaja dibuat hemat biaya: belum perlu langganan API mutasi, tapi UX buyer tetap rapi dan admin tidak perlu nebak-nebak transfer masuk itu milik siapa.",
+    "Fokus kami bikin alur pembelian tetap ringan di buyer: tidak ribet, tidak banyak klik, dan tetap jelas sampai pembayaran diverifikasi.",
   workflowSteps: defaultWorkflowSteps,
   catalogBadge: "Katalog",
-  catalogTitle: "Struktur produk sudah siap buat dihubungkan ke Supabase.",
+  catalogTitle: "Pilih produk yang kamu butuhkan.",
   catalogDescription:
-    "Saat env belum ada, halaman ini tetap hidup pakai mock data. Begitu tabel `products` terisi, storefront otomatis baca data live.",
-  stackBadge: "Stack Ready",
+    "Semua produk aktif bisa langsung dipilih, atur jumlah seat, lalu masukkan ke keranjang atau checkout langsung.",
+  stackBadge: "Kenapa Belanja di Sini",
   stackHighlights: defaultStackHighlights,
-  dashboardBadge: "Catatan Dashboard",
+  dashboardBadge: "Yang Kamu Dapatkan",
   dashboardNotes: defaultDashboardNotes,
-  catalogStatusLabel: "Status Catalog",
+  catalogStatusLabel: "Produk Aktif",
   catalogStatusDescription:
-    "Data produk otomatis fallback ke mock jika env Supabase belum diisi.",
-  workflowStatusLabel: "Workflow Admin",
+    "Produk yang tampil di katalog adalah produk yang sedang tersedia untuk dibeli.",
+  workflowStatusLabel: "Proses Bayar",
   workflowStatusDescription:
-    "Service role dipakai di server untuk bikin order, upload bukti bayar, dan baca dashboard admin.",
-  operationsStatusLabel: "Operasional",
-  operationsStatusTitle: "Manual but guided",
+    "Setelah checkout dibuat, buyer tinggal scan QRIS dan ikuti nominal transfer yang tampil di layar.",
+  operationsStatusLabel: "Pengiriman",
+  operationsStatusTitle: "Dipandu sampai selesai",
   operationsStatusDescription:
-    "Fokus admin tetap jelas: cek order yang butuh verifikasi dulu, baru lanjut kirim akun.",
+    "Setelah pembayaran cocok, admin lanjut kirim akun atau akses lewat WhatsApp.",
   checkoutEyebrow: "Checkout Produk",
   checkoutIntroDescription:
-    "Buyer cukup isi nama dan WhatsApp dulu. Setelah itu sistem arahkan ke QRIS dan tombol konfirmasi pembayaran.",
+    "Isi nama dan WhatsApp aktif, lalu lanjut ke pembayaran QRIS. Setelah transfer, tinggal kirim konfirmasi bayar dari halaman yang sama.",
   buyerFormTitle: "1. Isi Data Buyer",
   buyerFormDescription:
     "Data ini dipakai admin untuk cocokin pembayaran dan kirim akun lewat WhatsApp.",
@@ -123,7 +124,7 @@ export const defaultStoreSettingsInput: StoreSettingsInput = {
   paymentMerchantCity: "KENDAL",
   paymentCheckoutTitle: "2. Transfer via QRIS",
   paymentCheckoutDescription:
-    "Base QRIS merchant tetap sama, tapi nominal QR akan mengikuti total order dan sudah termasuk kode unik untuk bantu admin cek mutasi.",
+    "Scan QRIS berikut dan transfer sesuai total yang tampil. Nominal sudah otomatis menyesuaikan order kamu.",
   paymentInstructionLines: defaultPaymentInstructionLines,
   paymentConfirmTitle: "3. Konfirmasi Sudah Bayar",
   paymentConfirmDescription:
@@ -135,9 +136,9 @@ export const defaultStoreSettingsInput: StoreSettingsInput = {
   paymentConfirmButtonLabel: "Konfirmasi Sudah Bayar",
   checkoutContinueButtonLabel: "Lanjut ke Pembayaran",
   trackerTitle: "Tracker Order",
-  operationalNotesTitle: "Catatan Operasional",
+  operationalNotesTitle: "Butuh Bantuan?",
   operationalNotesDescription:
-    "Halaman ini memang dibuat untuk workflow semi-auto.",
+    "Simpan order ref dan gunakan menu lacak order bila ingin cek progres pembayaran.",
   operationalNotesLines: defaultOperationalNotesLines,
   orderSnapshotTitle: "Snapshot Order",
 };
@@ -159,6 +160,8 @@ export function extractStoreSettingsInput(
     brandTagline: settings.brandTagline,
     headerStatusBadge: settings.headerStatusBadge,
     headerNavLabels: settings.headerNavLabels,
+    contactWhatsappNumber: settings.contactWhatsappNumber,
+    contactWhatsappLabel: settings.contactWhatsappLabel,
     footerDescription: settings.footerDescription,
     footerLinkLabels: settings.footerLinkLabels,
     demoBannerText: settings.demoBannerText,
@@ -266,6 +269,14 @@ export function normalizeStoreSettingsInput(
     headerNavLabels: normalizeStringList(
       input.headerNavLabels,
       defaultStoreSettingsInput.headerNavLabels,
+    ),
+    contactWhatsappNumber: normalizeText(
+      input.contactWhatsappNumber,
+      defaultStoreSettingsInput.contactWhatsappNumber,
+    ),
+    contactWhatsappLabel: normalizeText(
+      input.contactWhatsappLabel,
+      defaultStoreSettingsInput.contactWhatsappLabel,
     ),
     footerDescription: normalizeText(
       input.footerDescription,

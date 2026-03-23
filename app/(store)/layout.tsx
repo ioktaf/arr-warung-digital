@@ -2,10 +2,6 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { CartProvider } from "@/components/store/cart-provider";
 import { getStoreSettings } from "@/lib/data";
-import {
-  hasPublicSupabaseEnv,
-  hasServiceRoleSupabaseEnv,
-} from "@/lib/supabase/env";
 import type { StoreSettings } from "@/types/domain";
 
 export default async function StoreLayout({
@@ -14,20 +10,11 @@ export default async function StoreLayout({
   children: React.ReactNode;
 }>) {
   const settings: StoreSettings = await getStoreSettings();
-  const publicEnvReady = hasPublicSupabaseEnv();
-  const serviceEnvReady = hasServiceRoleSupabaseEnv();
 
   return (
     <CartProvider>
       <div className="flex min-h-screen flex-col">
         <SiteHeader settings={settings} />
-        {!publicEnvReady || !serviceEnvReady ? (
-          <div className="border-b border-line bg-accent/10">
-            <div className="mx-auto max-w-7xl px-4 py-3 text-sm text-foreground sm:px-6 lg:px-8">
-              {settings.demoBannerText}
-            </div>
-          </div>
-        ) : null}
         <main className="flex-1">{children}</main>
         <SiteFooter settings={settings} />
       </div>

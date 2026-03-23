@@ -80,6 +80,8 @@ create table if not exists public.store_settings (
   brand_tagline text not null default 'Guest checkout, QRIS, manual mutation check',
   header_status_badge text not null default 'Semi-Auto',
   header_nav_labels jsonb not null default '[]'::jsonb,
+  contact_whatsapp_number text not null default '',
+  contact_whatsapp_label text not null default 'Kontak WhatsApp',
   footer_description text not null default 'Fondasi MVP untuk jualan akun digital dengan verifikasi pembayaran manual yang tetap rapi.',
   footer_link_labels jsonb not null default '[]'::jsonb,
   demo_banner_text text not null default 'Mode demo aktif. Isi `.env.local` dan jalankan `supabase/schema.sql` di Supabase SQL Editor untuk workflow live.',
@@ -221,6 +223,12 @@ add column if not exists header_status_badge text not null default 'Semi-Auto';
 
 alter table public.store_settings
 add column if not exists header_nav_labels jsonb not null default '[]'::jsonb;
+
+alter table public.store_settings
+add column if not exists contact_whatsapp_number text not null default '';
+
+alter table public.store_settings
+add column if not exists contact_whatsapp_label text not null default 'Kontak WhatsApp';
 
 alter table public.store_settings
 add column if not exists footer_description text not null default 'Fondasi MVP untuk jualan akun digital dengan verifikasi pembayaran manual yang tetap rapi.';
@@ -417,6 +425,8 @@ insert into public.store_settings (
   brand_tagline,
   header_status_badge,
   header_nav_labels,
+  contact_whatsapp_number,
+  contact_whatsapp_label,
   footer_description,
   footer_link_labels,
   demo_banner_text,
@@ -477,6 +487,8 @@ values (
   'Guest checkout, QRIS, manual mutation check',
   'Semi-Auto',
   '["Produk", "Alur Semi-Auto", "Dashboard Admin"]'::jsonb,
+  '',
+  'Kontak WhatsApp',
   'Fondasi MVP untuk jualan akun digital dengan verifikasi pembayaran manual yang tetap rapi.',
   '["Storefront", "Admin", "Checkout Demo"]'::jsonb,
   'Mode demo aktif. Isi `.env.local` dan jalankan `supabase/schema.sql` di Supabase SQL Editor untuk workflow live.',

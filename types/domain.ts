@@ -75,6 +75,8 @@ export type StoreSettingsInput = {
   brandTagline: string;
   headerStatusBadge: string;
   headerNavLabels: string[];
+  contactWhatsappNumber: string;
+  contactWhatsappLabel: string;
   footerDescription: string;
   footerLinkLabels: string[];
   demoBannerText: string;

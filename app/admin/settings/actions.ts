@@ -22,6 +22,8 @@ function redirectToSettings(notice: string, tone: NoticeTone = "success"): never
 function revalidateSettingsRoutes() {
   revalidatePath("/", "layout");
   revalidatePath("/", "page");
+  revalidatePath("/cart");
+  revalidatePath("/track");
   revalidatePath("/admin");
   revalidatePath("/admin/settings");
   revalidatePath("/checkout/[slug]", "page");
@@ -62,6 +64,8 @@ function buildStorefrontSettingsInput(
       "headerNavLabel",
       defaultStoreSettingsInput.headerNavLabels,
     ),
+    contactWhatsappNumber: getTextValue(formData.get("contactWhatsappNumber")),
+    contactWhatsappLabel: getTextValue(formData.get("contactWhatsappLabel")),
     footerDescription: getTextValue(formData.get("footerDescription")),
     footerLinkLabels: readStringList(
       formData,

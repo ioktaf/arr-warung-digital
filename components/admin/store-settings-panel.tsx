@@ -287,6 +287,21 @@ export function StoreSettingsPanel({
                 </Field>
               ))}
 
+              <Field label="Nomor WhatsApp publik">
+                <TextInput
+                  name="contactWhatsappNumber"
+                  defaultValue={settings.contactWhatsappNumber}
+                  placeholder="+628xxxxxxxxxx"
+                />
+              </Field>
+
+              <Field label="Label tombol WhatsApp">
+                <TextInput
+                  name="contactWhatsappLabel"
+                  defaultValue={settings.contactWhatsappLabel}
+                />
+              </Field>
+
               <Field
                 label="Deskripsi footer"
                 className="lg:col-span-2"
