@@ -3,11 +3,18 @@ import {
   deleteMockProduct,
   mockOrders,
   mockProducts,
+  mockStoreSettings,
   setMockProductActive,
   updateMockOrderStatus,
   updateMockProduct,
+  updateMockStoreSettings,
 } from "@/lib/mock-data";
 import { getOrderStatusUpdatePayload } from "@/lib/order-status";
+import {
+  defaultStoreSettings,
+  extractStoreSettingsInput,
+  normalizeStoreSettingsInput,
+} from "@/lib/store-settings";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   hasPublicSupabaseEnv,
@@ -15,7 +22,15 @@ import {
 } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
-import type { Order, OrderStatus, Product, ProductDraft } from "@/types/domain";
+import type {
+  Order,
+  OrderStatus,
+  Product,
+  ProductDraft,
+  StoreSettings,
+  StoreSettingsInput,
+  StoreWorkflowStep,
+} from "@/types/domain";
 
 type ProductRow = {
   id: string;
@@ -47,12 +62,48 @@ type OrderRow = {
   product: ProductRow | ProductRow[] | null;
 };
 
+type StoreSettingsRow = {
+  id: string;
+  key: string;
+  hero_badge: string | null;
+  hero_title: string | null;
+  hero_description: string | null;
+  hero_primary_cta_label: string | null;
+  hero_secondary_cta_label: string | null;
+  workflow_badge: string | null;
+  workflow_title: string | null;
+  workflow_description: string | null;
+  workflow_steps: unknown;
+  catalog_badge: string | null;
+  catalog_title: string | null;
+  catalog_description: string | null;
+  stack_badge: string | null;
+  stack_highlights: unknown;
+  dashboard_badge: string | null;
+  dashboard_notes: unknown;
+  payment_display_label: string | null;
+  payment_qris_payload: string | null;
+  payment_merchant_name: string | null;
+  payment_merchant_city: string | null;
+  payment_checkout_title: string | null;
+  payment_checkout_description: string | null;
+  payment_instruction_lines: unknown;
+  updated_at: string;
+};
+
 type ProductMutationResult = {
   ok: boolean;
   mode: "live" | "mock";
   message?: string;
   product?: Product | null;
   previousSlug?: string | null;
+};
+
+type StoreSettingsMutationResult = {
+  ok: boolean;
+  mode: "live" | "mock";
+  message?: string;
+  settings?: StoreSettings;
 };
 
 function toNumber(value: number | string) {
@@ -94,6 +145,129 @@ function mapOrder(row: OrderRow): Order {
     cancelledAt: row.cancelled_at,
     createdAt: row.created_at,
     product: relatedProduct ? mapProduct(relatedProduct) : mockProducts[0],
+  };
+}
+
+function normalizeTextListValue(
+  value: unknown,
+  fallback: string[],
+) {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+
+  return fallback.map((fallbackItem, index) => {
+    const candidate = value[index];
+    return typeof candidate === "string" && candidate.trim()
+      ? candidate.trim()
+      : fallbackItem;
+  });
+}
+
+function normalizeWorkflowStepsValue(
+  value: unknown,
+  fallback: StoreWorkflowStep[],
+) {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+
+  return fallback.map((fallbackStep, index) => {
+    const candidate = value[index];
+
+    if (!candidate || typeof candidate !== "object") {
+      return fallbackStep;
+    }
+
+    const title =
+      "title" in candidate && typeof candidate.title === "string"
+        ? candidate.title.trim()
+        : "";
+    const description =
+      "description" in candidate && typeof candidate.description === "string"
+        ? candidate.description.trim()
+        : "";
+
+    return {
+      title: title || fallbackStep.title,
+      description: description || fallbackStep.description,
+    };
+  });
+}
+
+function mapStoreSettings(row: StoreSettingsRow): StoreSettings {
+  return {
+    id: row.id,
+    key: row.key,
+    updatedAt: row.updated_at,
+    ...normalizeStoreSettingsInput({
+      heroBadge: row.hero_badge ?? undefined,
+      heroTitle: row.hero_title ?? undefined,
+      heroDescription: row.hero_description ?? undefined,
+      heroPrimaryCtaLabel: row.hero_primary_cta_label ?? undefined,
+      heroSecondaryCtaLabel: row.hero_secondary_cta_label ?? undefined,
+      workflowBadge: row.workflow_badge ?? undefined,
+      workflowTitle: row.workflow_title ?? undefined,
+      workflowDescription: row.workflow_description ?? undefined,
+      workflowSteps: normalizeWorkflowStepsValue(
+        row.workflow_steps,
+        defaultStoreSettings.workflowSteps,
+      ),
+      catalogBadge: row.catalog_badge ?? undefined,
+      catalogTitle: row.catalog_title ?? undefined,
+      catalogDescription: row.catalog_description ?? undefined,
+      stackBadge: row.stack_badge ?? undefined,
+      stackHighlights: normalizeTextListValue(
+        row.stack_highlights,
+        defaultStoreSettings.stackHighlights,
+      ),
+      dashboardBadge: row.dashboard_badge ?? undefined,
+      dashboardNotes: normalizeTextListValue(
+        row.dashboard_notes,
+        defaultStoreSettings.dashboardNotes,
+      ),
+      paymentDisplayLabel: row.payment_display_label ?? undefined,
+      paymentQrisPayload: row.payment_qris_payload ?? undefined,
+      paymentMerchantName: row.payment_merchant_name ?? undefined,
+      paymentMerchantCity: row.payment_merchant_city ?? undefined,
+      paymentCheckoutTitle: row.payment_checkout_title ?? undefined,
+      paymentCheckoutDescription: row.payment_checkout_description ?? undefined,
+      paymentInstructionLines: normalizeTextListValue(
+        row.payment_instruction_lines,
+        defaultStoreSettings.paymentInstructionLines,
+      ),
+    }),
+  };
+}
+
+function toStoreSettingsRowPayload(input: StoreSettingsInput) {
+  const normalized = normalizeStoreSettingsInput(input);
+
+  return {
+    key: "default",
+    hero_badge: normalized.heroBadge,
+    hero_title: normalized.heroTitle,
+    hero_description: normalized.heroDescription,
+    hero_primary_cta_label: normalized.heroPrimaryCtaLabel,
+    hero_secondary_cta_label: normalized.heroSecondaryCtaLabel,
+    workflow_badge: normalized.workflowBadge,
+    workflow_title: normalized.workflowTitle,
+    workflow_description: normalized.workflowDescription,
+    workflow_steps: normalized.workflowSteps,
+    catalog_badge: normalized.catalogBadge,
+    catalog_title: normalized.catalogTitle,
+    catalog_description: normalized.catalogDescription,
+    stack_badge: normalized.stackBadge,
+    stack_highlights: normalized.stackHighlights,
+    dashboard_badge: normalized.dashboardBadge,
+    dashboard_notes: normalized.dashboardNotes,
+    payment_display_label: normalized.paymentDisplayLabel,
+    payment_qris_payload: normalized.paymentQrisPayload,
+    payment_merchant_name: normalized.paymentMerchantName,
+    payment_merchant_city: normalized.paymentMerchantCity,
+    payment_checkout_title: normalized.paymentCheckoutTitle,
+    payment_checkout_description: normalized.paymentCheckoutDescription,
+    payment_instruction_lines: normalized.paymentInstructionLines,
   };
 }
 
@@ -154,6 +328,25 @@ function getProductErrorMessage(message: string | undefined, fallback: string) {
   return fallback;
 }
 
+function isMissingStoreSettingsTableError(message: string | undefined) {
+  if (!message) {
+    return false;
+  }
+
+  const normalized = message.toLowerCase();
+
+  return (
+    normalized.includes("store_settings") &&
+    (normalized.includes("schema cache") ||
+      normalized.includes("does not exist") ||
+      normalized.includes("relation"))
+  );
+}
+
+function getStoreSettingsTableMessage() {
+  return "Table store_settings belum ada. Jalankan schema.sql terbaru di Supabase SQL Editor.";
+}
+
 function hasConflictingMockSlug(slug: string, excludedProductId?: string) {
   return mockProducts.some(
     (product) => product.slug === slug && product.id !== excludedProductId,
@@ -185,6 +378,120 @@ async function resolveProofImageUrl(path: string | null) {
   }
 
   return data.signedUrl;
+}
+
+export async function getStoreSettings() {
+  if (!hasPublicSupabaseEnv()) {
+    return mockStoreSettings;
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return mockStoreSettings;
+  }
+
+  const { data, error } = await supabase
+    .from("store_settings")
+    .select("*")
+    .eq("key", "default")
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error && !isMissingStoreSettingsTableError(error.message)) {
+      console.error("Failed to fetch storefront settings", error.message);
+    }
+
+    return mockStoreSettings;
+  }
+
+  return mapStoreSettings(data as StoreSettingsRow);
+}
+
+export async function getAdminStoreSettings() {
+  if (!hasServiceRoleSupabaseEnv()) {
+    return getStoreSettings();
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  if (!supabase) {
+    return getStoreSettings();
+  }
+
+  const { data, error } = await supabase
+    .from("store_settings")
+    .select("*")
+    .eq("key", "default")
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error && !isMissingStoreSettingsTableError(error.message)) {
+      console.error("Failed to fetch admin store settings", error.message);
+    }
+
+    return mockStoreSettings;
+  }
+
+  return mapStoreSettings(data as StoreSettingsRow);
+}
+
+export async function updateStoreSettings(
+  input: Partial<StoreSettingsInput>,
+): Promise<StoreSettingsMutationResult> {
+  const currentSettings = hasServiceRoleSupabaseEnv()
+    ? await getAdminStoreSettings()
+    : mockStoreSettings;
+  const nextInput = normalizeStoreSettingsInput({
+    ...extractStoreSettingsInput(currentSettings),
+    ...input,
+  });
+
+  if (!hasServiceRoleSupabaseEnv()) {
+    return {
+      ok: true,
+      mode: "mock",
+      settings: updateMockStoreSettings(nextInput),
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  if (!supabase) {
+    return {
+      ok: true,
+      mode: "mock",
+      settings: updateMockStoreSettings(nextInput),
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("store_settings")
+    .upsert(toStoreSettingsRowPayload(nextInput), {
+      onConflict: "key",
+    })
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) {
+      console.error("Failed to update store settings", error.message);
+    }
+
+    return {
+      ok: false,
+      mode: "live",
+      message: isMissingStoreSettingsTableError(error?.message)
+        ? getStoreSettingsTableMessage()
+        : "Pengaturan storefront atau pembayaran gagal disimpan. Coba lagi sebentar.",
+    };
+  }
+
+  return {
+    ok: true,
+    mode: "live",
+    settings: mapStoreSettings(data as StoreSettingsRow),
+  };
 }
 
 export async function getCatalogProducts() {

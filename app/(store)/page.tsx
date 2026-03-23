@@ -10,12 +10,7 @@ import {
 import { CatalogBrowser } from "@/components/store/catalog-browser";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import {
-  dashboardNotes,
-  semiAutoSteps,
-  stackHighlights,
-} from "@/lib/constants";
-import { getCatalogProducts } from "@/lib/data";
+import { getCatalogProducts, getStoreSettings } from "@/lib/data";
 import {
   hasPublicSupabaseEnv,
   hasServiceRoleSupabaseEnv,
@@ -23,6 +18,7 @@ import {
 
 export default async function StorefrontPage() {
   const products = await getCatalogProducts();
+  const settings = await getStoreSettings();
   const publicEnvReady = hasPublicSupabaseEnv();
   const serviceEnvReady = hasServiceRoleSupabaseEnv();
   const lowStockProducts = products.filter((product) => product.stock <= 10).length;
@@ -33,16 +29,13 @@ export default async function StorefrontPage() {
         <Card className="relative overflow-hidden p-8 sm:p-10">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand via-accent to-brand" />
           <div className="max-w-3xl space-y-6">
-            <Badge tone="accent">Storefront MVP</Badge>
+            <Badge tone="accent">{settings.heroBadge}</Badge>
             <div className="space-y-4">
               <h1 className="text-balance text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                Jualan produk digital dengan checkout cepat, QRIS, dan verifikasi
-                mutasi manual yang tetap terasa modern.
+                {settings.heroTitle}
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-muted">
-                Buyer bisa checkout tanpa login, admin dapat notifikasi order
-                yang perlu dicek, dan semua fondasinya sudah disiapkan buat
-                nyambung ke Supabase.
+                {settings.heroDescription}
               </p>
             </div>
 
@@ -51,14 +44,14 @@ export default async function StorefrontPage() {
                 href="#produk"
                 className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-strong"
               >
-                Lihat Produk
+                {settings.heroPrimaryCtaLabel}
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/admin"
                 className="inline-flex items-center gap-2 rounded-full border border-line bg-white/70 px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white"
               >
-                Buka Dashboard Admin
+                {settings.heroSecondaryCtaLabel}
               </Link>
             </div>
           </div>
@@ -124,20 +117,16 @@ export default async function StorefrontPage() {
       >
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <Badge>Alur Semi-Auto</Badge>
-            <h2 className="mt-3 text-3xl font-black sm:text-4xl">
-              Buyer simpel, admin tetap pegang kendali.
-            </h2>
+            <Badge>{settings.workflowBadge}</Badge>
+            <h2 className="mt-3 text-3xl font-black sm:text-4xl">{settings.workflowTitle}</h2>
           </div>
           <p className="max-w-xl text-sm leading-7 text-muted">
-            Flow ini sengaja dibuat hemat biaya: belum perlu langganan API
-            mutasi, tapi UX buyer tetap rapi dan admin tidak perlu nebak-nebak
-            transfer masuk itu milik siapa.
+            {settings.workflowDescription}
           </p>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-4">
-          {semiAutoSteps.map((step, index) => (
+          {settings.workflowSteps.map((step, index) => (
             <Card
               key={step.title}
               className="relative"
@@ -161,14 +150,11 @@ export default async function StorefrontPage() {
       >
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <Badge tone="brand">Katalog</Badge>
-            <h2 className="mt-3 text-3xl font-black sm:text-4xl">
-              Struktur produk sudah siap buat dihubungkan ke Supabase.
-            </h2>
+            <Badge tone="brand">{settings.catalogBadge}</Badge>
+            <h2 className="mt-3 text-3xl font-black sm:text-4xl">{settings.catalogTitle}</h2>
           </div>
           <p className="max-w-xl text-sm leading-7 text-muted">
-            Saat env belum ada, halaman ini tetap hidup pakai mock data. Begitu
-            tabel `products` terisi, storefront otomatis baca data live.
+            {settings.catalogDescription}
           </p>
         </div>
 
@@ -177,9 +163,9 @@ export default async function StorefrontPage() {
 
       <section className="mt-16 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <Card>
-          <Badge tone="accent">Stack Ready</Badge>
+          <Badge tone="accent">{settings.stackBadge}</Badge>
           <div className="mt-5 space-y-4">
-            {stackHighlights.map((item) => (
+            {settings.stackHighlights.map((item) => (
               <div
                 key={item}
                 className="flex gap-3"
@@ -192,9 +178,9 @@ export default async function StorefrontPage() {
         </Card>
 
         <Card>
-          <Badge>Catatan Dashboard</Badge>
+          <Badge>{settings.dashboardBadge}</Badge>
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            {dashboardNotes.map((note) => (
+            {settings.dashboardNotes.map((note) => (
               <div
                 key={note}
                 className="rounded-[22px] border border-line bg-white/60 p-4"

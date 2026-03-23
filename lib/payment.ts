@@ -1,17 +1,11 @@
 import { cache } from "react";
 import QRCode from "qrcode";
 
-export const paymentConfig = {
-  qrisPayload:
-    "00020101021126760024ID.CO.SPEEDCASH.MERCHANT01189360081530002045920215ID10250020459260303UKE51440014ID.CO.QRIS.WWW0215ID10254280460520303UKE5204526253033605802ID5918ARR WARUNG DIGITAL6006KENDAL61055138162330509S3443864101091263033620703A016304E9B0",
-  merchantName: "ARR WARUNG DIGITAL",
-  merchantCity: "KENDAL",
-  displayLabel: "QRIS Statis ARR WARUNG DIGITAL",
-} as const;
+import { defaultStoreSettingsInput } from "@/lib/store-settings";
 
-const generateQrisDataUrl = cache(async () => {
+const generateQrisDataUrl = cache(async (payload: string) => {
   try {
-    return await QRCode.toDataURL(paymentConfig.qrisPayload, {
+    return await QRCode.toDataURL(payload, {
       errorCorrectionLevel: "M",
       margin: 2,
       width: 960,
@@ -26,6 +20,8 @@ const generateQrisDataUrl = cache(async () => {
   }
 });
 
-export async function getQrisImageDataUrl() {
-  return generateQrisDataUrl();
+export async function getQrisImageDataUrl(
+  payload = defaultStoreSettingsInput.paymentQrisPayload,
+) {
+  return generateQrisDataUrl(payload);
 }

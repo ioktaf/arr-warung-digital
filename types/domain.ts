@@ -40,3 +40,40 @@ export type Order = {
   createdAt: string;
   product: Product;
 };
+
+export type StoreWorkflowStep = {
+  title: string;
+  description: string;
+};
+
+export type StoreSettingsInput = {
+  heroBadge: string;
+  heroTitle: string;
+  heroDescription: string;
+  heroPrimaryCtaLabel: string;
+  heroSecondaryCtaLabel: string;
+  workflowBadge: string;
+  workflowTitle: string;
+  workflowDescription: string;
+  workflowSteps: StoreWorkflowStep[];
+  catalogBadge: string;
+  catalogTitle: string;
+  catalogDescription: string;
+  stackBadge: string;
+  stackHighlights: string[];
+  dashboardBadge: string;
+  dashboardNotes: string[];
+  paymentDisplayLabel: string;
+  paymentQrisPayload: string;
+  paymentMerchantName: string;
+  paymentMerchantCity: string;
+  paymentCheckoutTitle: string;
+  paymentCheckoutDescription: string;
+  paymentInstructionLines: string[];
+};
+
+export type StoreSettings = StoreSettingsInput & {
+  id: string;
+  key: string;
+  updatedAt: string;
+};

@@ -35,12 +35,20 @@ export default async function AdminOrdersPage() {
           </p>
         </div>
 
-        <Link
-          href="/admin/products"
-          className="inline-flex items-center rounded-full border border-line bg-white/70 px-5 py-3 text-sm font-semibold transition hover:bg-white"
-        >
-          Kelola Produk
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/admin/products"
+            className="inline-flex items-center rounded-full border border-line bg-white/70 px-5 py-3 text-sm font-semibold transition hover:bg-white"
+          >
+            Kelola Produk
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="inline-flex items-center rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-strong"
+          >
+            Atur Store & Pembayaran
+          </Link>
+        </div>
       </section>
 
       <AdminAutoRefresh />
@@ -121,6 +129,7 @@ export default async function AdminOrdersPage() {
             <div className="space-y-3 text-sm leading-7 text-muted">
               <p>Dashboard ini baca data live kalau `SUPABASE_SERVICE_ROLE_KEY` sudah diisi.</p>
               <p>Bucket `payment-proofs` dipakai buat upload bukti bayar dari halaman checkout.</p>
+              <p>Panel `/admin/settings` sekarang mengendalikan copy storefront, QRIS, dan refund calculator operasional.</p>
               <p>Realtime channel untuk `orders` sudah disiapkan di schema SQL, tinggal dipakai di sprint berikutnya untuk notif toast atau badge live.</p>
             </div>
           </Card>

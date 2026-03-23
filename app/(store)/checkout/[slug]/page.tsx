@@ -13,13 +13,13 @@ import {
 import { SubmitButton } from "@/components/submit-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { getCheckoutOrder, getProductBySlug } from "@/lib/data";
+import { getCheckoutOrder, getProductBySlug, getStoreSettings } from "@/lib/data";
 import {
   formatCurrency,
   formatDateTime,
   getOrderStatusMeta,
 } from "@/lib/format";
-import { getQrisImageDataUrl, paymentConfig } from "@/lib/payment";
+import { getQrisImageDataUrl } from "@/lib/payment";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
 import {
   formatWhatsappDisplay,
@@ -75,7 +75,10 @@ export default async function CheckoutPage({
   const { slug } = await params;
   const query = await searchParams;
   const product = await getProductBySlug(slug);
-  const qrisImageDataUrl = await getQrisImageDataUrl();
+  const settings = await getStoreSettings();
+  const qrisImageDataUrl = await getQrisImageDataUrl(
+    settings.paymentQrisPayload,
+  );
 
   if (!product) {
     notFound();
@@ -258,10 +261,11 @@ export default async function CheckoutPage({
                     <Clock3 className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold">2. Transfer via QRIS</h2>
+                    <h2 className="text-2xl font-bold">
+                      {settings.paymentCheckoutTitle}
+                    </h2>
                     <p className="text-sm leading-7 text-muted">
-                      Pakai QRIS statis merchant dulu. Setelah transfer, buyer
-                      klik konfirmasi pembayaran di bawah.
+                      {settings.paymentCheckoutDescription}
                     </p>
                   </div>
                 </div>
@@ -271,7 +275,7 @@ export default async function CheckoutPage({
                     {qrisImageDataUrl ? (
                       <Image
                         src={qrisImageDataUrl}
-                        alt={paymentConfig.displayLabel}
+                        alt={settings.paymentDisplayLabel}
                         width={960}
                         height={960}
                         unoptimized
@@ -290,10 +294,10 @@ export default async function CheckoutPage({
                         Merchant QRIS
                       </p>
                       <p className="mt-2 text-2xl font-black">
-                        {paymentConfig.merchantName}
+                        {settings.paymentMerchantName}
                       </p>
                       <p className="mt-3 text-sm leading-7 text-muted">
-                        {paymentConfig.displayLabel} - {paymentConfig.merchantCity}
+                        {settings.paymentDisplayLabel} - {settings.paymentMerchantCity}
                       </p>
                     </div>
 
@@ -305,7 +309,7 @@ export default async function CheckoutPage({
                         {formatCurrency(product.price)}
                       </p>
                       <p className="mt-3 text-sm leading-7 text-muted">
-                        QRIS ini tetap statis di merchant ARR WARUNG DIGITAL.
+                        QRIS ini tetap statis di merchant {settings.paymentMerchantName}.
                         Buyer cukup scan QR, lalu transfer sesuai nominal produk
                         yang tampil di halaman ini.
                       </p>
@@ -316,10 +320,11 @@ export default async function CheckoutPage({
                         Instruksi Ringkas
                       </p>
                       <div className="mt-3 space-y-3 text-sm leading-7 text-muted">
-                        <p>1. Scan QRIS merchant ARR WARUNG DIGITAL.</p>
-                        <p>2. Pastikan nominal yang dibayar sama dengan harga produk.</p>
-                        <p>3. Kembali ke halaman ini lalu klik konfirmasi bayar.</p>
-                        <p>4. Upload bukti transfer kalau ada biar admin lebih cepat cek.</p>
+                        {settings.paymentInstructionLines.map((line, index) => (
+                          <p key={`${index + 1}-${line}`}>
+                            {index + 1}. {line}
+                          </p>
+                        ))}
                       </div>
                     </div>
                   </div>

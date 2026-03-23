@@ -52,7 +52,8 @@ export default async function AdminLoginPage({
             <h1 className="mt-3 text-4xl font-black">Masuk ke workspace admin</h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
               Dashboard admin sekarang dikunci password supaya panel order dan
-              edit produk tidak bisa dibuka publik begitu saja.
+              edit produk, settings jualan, dan payment control tidak bisa
+              dibuka publik begitu saja.
             </p>
           </div>
 
@@ -81,7 +82,7 @@ export default async function AdminLoginPage({
 
             <div className="space-y-3 text-sm leading-7 text-muted">
               <p>1. Isi password admin yang disimpan di environment Vercel.</p>
-              <p>2. Setelah login, kamu bisa masuk ke board order dan panel produk.</p>
+              <p>2. Setelah login, kamu bisa masuk ke board order, panel produk, dan settings storefront.</p>
               <p>3. Logout akan menutup sesi admin di browser ini.</p>
             </div>
           </Card>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Package2, Store } from "lucide-react";
+import { LayoutDashboard, Package2, Settings2, Store } from "lucide-react";
 
 import { logoutAdminAction } from "@/app/admin/login/actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -9,6 +9,7 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 const adminLinks = [
   { href: "/admin", label: "Orders", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package2 },
+  { href: "/admin/settings", label: "Settings", icon: Settings2 },
   { href: "/", label: "Storefront", icon: Store },
 ];
 
@@ -32,7 +33,7 @@ export default async function AdminLayout({
             <h1 className="mt-3 text-3xl font-black">ARR Warung Digital</h1>
             <p className="mt-2 text-sm leading-7 text-muted">
               {isAuthenticated
-                ? "Workspace admin terkunci password untuk order board dan panel produk."
+                ? "Workspace admin terkunci password untuk order board, panel produk, dan konfigurasi storefront."
                 : "Masuk dengan password admin untuk membuka dashboard operasional."}
             </p>
           </div>

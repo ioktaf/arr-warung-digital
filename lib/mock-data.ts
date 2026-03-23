@@ -1,6 +1,14 @@
 import { getOrderStatusUpdatePayload } from "@/lib/order-status";
 import { productSeedList } from "@/lib/product-seed";
-import type { Order, OrderStatus, Product, ProductDraft } from "@/types/domain";
+import { defaultStoreSettings } from "@/lib/store-settings";
+import type {
+  Order,
+  OrderStatus,
+  Product,
+  ProductDraft,
+  StoreSettings,
+  StoreSettingsInput,
+} from "@/types/domain";
 
 const now = new Date();
 
@@ -71,6 +79,10 @@ export const mockOrders: Order[] = [
     product: getMockProduct("chatgpt-business-1-bulan-team-invite"),
   },
 ];
+
+export const mockStoreSettings: StoreSettings = {
+  ...defaultStoreSettings,
+};
 
 export function updateMockOrderStatus(orderId: string, nextStatus: OrderStatus) {
   const order = mockOrders.find((item) => item.id === orderId);
@@ -152,4 +164,33 @@ export function deleteMockProduct(productId: string) {
 
   const [product] = mockProducts.splice(index, 1);
   return product ?? null;
+}
+
+export function updateMockStoreSettings(input: StoreSettingsInput) {
+  mockStoreSettings.heroBadge = input.heroBadge;
+  mockStoreSettings.heroTitle = input.heroTitle;
+  mockStoreSettings.heroDescription = input.heroDescription;
+  mockStoreSettings.heroPrimaryCtaLabel = input.heroPrimaryCtaLabel;
+  mockStoreSettings.heroSecondaryCtaLabel = input.heroSecondaryCtaLabel;
+  mockStoreSettings.workflowBadge = input.workflowBadge;
+  mockStoreSettings.workflowTitle = input.workflowTitle;
+  mockStoreSettings.workflowDescription = input.workflowDescription;
+  mockStoreSettings.workflowSteps = input.workflowSteps;
+  mockStoreSettings.catalogBadge = input.catalogBadge;
+  mockStoreSettings.catalogTitle = input.catalogTitle;
+  mockStoreSettings.catalogDescription = input.catalogDescription;
+  mockStoreSettings.stackBadge = input.stackBadge;
+  mockStoreSettings.stackHighlights = input.stackHighlights;
+  mockStoreSettings.dashboardBadge = input.dashboardBadge;
+  mockStoreSettings.dashboardNotes = input.dashboardNotes;
+  mockStoreSettings.paymentDisplayLabel = input.paymentDisplayLabel;
+  mockStoreSettings.paymentQrisPayload = input.paymentQrisPayload;
+  mockStoreSettings.paymentMerchantName = input.paymentMerchantName;
+  mockStoreSettings.paymentMerchantCity = input.paymentMerchantCity;
+  mockStoreSettings.paymentCheckoutTitle = input.paymentCheckoutTitle;
+  mockStoreSettings.paymentCheckoutDescription = input.paymentCheckoutDescription;
+  mockStoreSettings.paymentInstructionLines = input.paymentInstructionLines;
+  mockStoreSettings.updatedAt = new Date().toISOString();
+
+  return mockStoreSettings;
 }
