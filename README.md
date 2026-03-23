@@ -5,9 +5,9 @@ Storefront produk digital dengan guest checkout, QRIS, upload bukti bayar, dan d
 ## Yang Sudah Siap
 
 - Storefront publik dengan katalog produk dan alur semi-auto.
-- Halaman checkout per produk dengan QRIS asli dari payload merchant dan konfirmasi bayar.
+- Halaman checkout per produk dengan QRIS nominal-dynamic dari payload merchant dan konfirmasi bayar.
 - Dashboard admin untuk melihat order dan kelola produk langsung dari website.
-- Panel admin settings untuk mengatur logo website, copy storefront, panel pembayaran, dan QRIS merchant.
+- Panel admin settings untuk mengatur logo website, copy storefront, panel pembayaran, dan base payload QRIS merchant.
 - Refund calculator internal untuk hitung refund prorata.
 - Password gate sederhana untuk mengunci area admin.
 - Fallback mock data kalau env Supabase belum diisi.

@@ -77,9 +77,6 @@ export default async function CheckoutPage({
   const query = await searchParams;
   const product = await getProductBySlug(slug);
   const settings = await getStoreSettings();
-  const qrisImageDataUrl = await getQrisImageDataUrl(
-    settings.paymentQrisPayload,
-  );
 
   if (!product) {
     notFound();
@@ -115,6 +112,10 @@ export default async function CheckoutPage({
     ? order?.totalPrice ?? (product.price + uniqueCode)
     : product.price;
   const basePrice = Math.max(transferAmount - uniqueCode, 0);
+  const qrisImageDataUrl = await getQrisImageDataUrl(
+    settings.paymentQrisPayload,
+    buyerReady ? transferAmount : undefined,
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
@@ -324,15 +325,15 @@ export default async function CheckoutPage({
                           <p>Harga dasar: {formatCurrency(basePrice)}</p>
                           <p>Kode unik: {formatUniqueCode(uniqueCode)}</p>
                           <p>
-                            QRIS ini tetap statis di merchant {settings.paymentMerchantName}.
-                            Buyer cukup scan QR, lalu transfer sesuai total akhir di atas.
+                            Base QRIS merchant {settings.paymentMerchantName} tetap sama,
+                            tapi nominal di QR mengikuti total akhir di atas.
                           </p>
                         </div>
                       ) : (
                         <p className="mt-3 text-sm leading-7 text-muted">
-                          QRIS ini tetap statis di merchant {settings.paymentMerchantName}.
-                          Buyer cukup scan QR, lalu transfer sesuai nominal produk
-                          yang tampil di halaman ini.
+                          Base QRIS merchant {settings.paymentMerchantName} tetap sama.
+                          Buyer cukup scan QR, lalu transfer sesuai nominal yang tampil
+                          di halaman ini.
                         </p>
                       )}
                     </div>

@@ -116,14 +116,14 @@ export const defaultStoreSettingsInput: StoreSettingsInput = {
     "Data ini dipakai admin untuk cocokin pembayaran dan kirim akun lewat WhatsApp.",
   buyerReadyTitle: "Data Buyer Tersimpan",
   buyerReadyDescription: "Order siap lanjut ke tahap pembayaran QRIS.",
-  paymentDisplayLabel: "QRIS Statis ARR WARUNG DIGITAL",
+  paymentDisplayLabel: "QRIS ARR WARUNG DIGITAL",
   paymentQrisPayload:
     "00020101021126760024ID.CO.SPEEDCASH.MERCHANT01189360081530002045920215ID10250020459260303UKE51440014ID.CO.QRIS.WWW0215ID10254280460520303UKE5204526253033605802ID5918ARR WARUNG DIGITAL6006KENDAL61055138162330509S3443864101091263033620703A016304E9B0",
   paymentMerchantName: "ARR WARUNG DIGITAL",
   paymentMerchantCity: "KENDAL",
   paymentCheckoutTitle: "2. Transfer via QRIS",
   paymentCheckoutDescription:
-    "Pakai QRIS statis merchant dulu. Total transfer mengikuti order dan sudah termasuk kode unik untuk bantu admin cek mutasi.",
+    "Base QRIS merchant tetap sama, tapi nominal QR akan mengikuti total order dan sudah termasuk kode unik untuk bantu admin cek mutasi.",
   paymentInstructionLines: defaultPaymentInstructionLines,
   paymentConfirmTitle: "3. Konfirmasi Sudah Bayar",
   paymentConfirmDescription:

@@ -429,12 +429,12 @@ values (
   'Data ini dipakai admin untuk cocokin pembayaran dan kirim akun lewat WhatsApp.',
   'Data Buyer Tersimpan',
   'Order siap lanjut ke tahap pembayaran QRIS.',
-  'QRIS Statis ARR WARUNG DIGITAL',
+  'QRIS ARR WARUNG DIGITAL',
   '00020101021126760024ID.CO.SPEEDCASH.MERCHANT01189360081530002045920215ID10250020459260303UKE51440014ID.CO.QRIS.WWW0215ID10254280460520303UKE5204526253033605802ID5918ARR WARUNG DIGITAL6006KENDAL61055138162330509S3443864101091263033620703A016304E9B0',
   'ARR WARUNG DIGITAL',
   'KENDAL',
   '2. Transfer via QRIS',
-  'Pakai QRIS statis merchant dulu. Total transfer mengikuti order dan sudah termasuk kode unik untuk bantu admin cek mutasi.',
+  'Base QRIS merchant tetap sama, tapi nominal QR akan mengikuti total order dan sudah termasuk kode unik untuk bantu admin cek mutasi.',
   '[
     "Scan QRIS merchant ARR WARUNG DIGITAL.",
     "Perhatikan total transfer di halaman checkout karena nominal ini sudah termasuk kode unik.",
@@ -462,9 +462,17 @@ values (
 on conflict (key) do nothing;
 
 update public.store_settings
-set payment_checkout_description = 'Pakai QRIS statis merchant dulu. Total transfer mengikuti order dan sudah termasuk kode unik untuk bantu admin cek mutasi.'
+set payment_checkout_description = 'Base QRIS merchant tetap sama, tapi nominal QR akan mengikuti total order dan sudah termasuk kode unik untuk bantu admin cek mutasi.'
 where key = 'default'
-  and payment_checkout_description = 'Pakai QRIS statis merchant dulu. Setelah transfer, buyer klik konfirmasi pembayaran di bawah.';
+  and payment_checkout_description in (
+    'Pakai QRIS statis merchant dulu. Setelah transfer, buyer klik konfirmasi pembayaran di bawah.',
+    'Pakai QRIS statis merchant dulu. Total transfer mengikuti order dan sudah termasuk kode unik untuk bantu admin cek mutasi.'
+  );
+
+update public.store_settings
+set payment_display_label = 'QRIS ARR WARUNG DIGITAL'
+where key = 'default'
+  and payment_display_label = 'QRIS Statis ARR WARUNG DIGITAL';
 
 update public.store_settings
 set payment_instruction_lines = '[

@@ -64,10 +64,10 @@ export default async function AdminSettingsPage({
           <p className="mt-6 text-sm uppercase tracking-[0.22em] text-muted">
             Pembayaran
           </p>
-          <p className="mt-2 text-3xl font-black">QRIS Live</p>
+          <p className="mt-2 text-3xl font-black">QRIS Dynamic</p>
           <p className="mt-2 text-sm leading-7 text-muted">
-            Payload QRIS, merchant label, deskripsi checkout, dan instruksi
-            buyer bisa diganti langsung dari sini.
+            Payload QRIS merchant jadi base, lalu nominal QR digenerate ulang
+            per order langsung dari checkout.
           </p>
         </Card>
 
