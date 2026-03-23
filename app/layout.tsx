@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
+
+import { getStoreSettings } from "@/lib/data";
+
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: "ARR Warung Digital",
-    template: "%s | ARR Warung Digital",
-  },
-  description:
-    "Katalog produk digital dengan guest checkout, QRIS, upload bukti bayar, dan dashboard admin semi-auto berbasis Next.js + Supabase.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getStoreSettings();
+
+  return {
+    title: {
+      default: settings.brandName,
+      template: `%s | ${settings.brandName}`,
+    },
+    description: settings.heroDescription,
+  };
+}
 
 export default function RootLayout({
   children,

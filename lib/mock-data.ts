@@ -167,7 +167,15 @@ export function deleteMockProduct(productId: string) {
 }
 
 export function updateMockStoreSettings(input: StoreSettingsInput) {
+  mockStoreSettings.brandName = input.brandName;
+  mockStoreSettings.brandCompactName = input.brandCompactName;
   mockStoreSettings.brandLogoUrl = input.brandLogoUrl;
+  mockStoreSettings.brandTagline = input.brandTagline;
+  mockStoreSettings.headerStatusBadge = input.headerStatusBadge;
+  mockStoreSettings.headerNavLabels = input.headerNavLabels;
+  mockStoreSettings.footerDescription = input.footerDescription;
+  mockStoreSettings.footerLinkLabels = input.footerLinkLabels;
+  mockStoreSettings.demoBannerText = input.demoBannerText;
   mockStoreSettings.heroBadge = input.heroBadge;
   mockStoreSettings.heroTitle = input.heroTitle;
   mockStoreSettings.heroDescription = input.heroDescription;
@@ -184,6 +192,19 @@ export function updateMockStoreSettings(input: StoreSettingsInput) {
   mockStoreSettings.stackHighlights = input.stackHighlights;
   mockStoreSettings.dashboardBadge = input.dashboardBadge;
   mockStoreSettings.dashboardNotes = input.dashboardNotes;
+  mockStoreSettings.catalogStatusLabel = input.catalogStatusLabel;
+  mockStoreSettings.catalogStatusDescription = input.catalogStatusDescription;
+  mockStoreSettings.workflowStatusLabel = input.workflowStatusLabel;
+  mockStoreSettings.workflowStatusDescription = input.workflowStatusDescription;
+  mockStoreSettings.operationsStatusLabel = input.operationsStatusLabel;
+  mockStoreSettings.operationsStatusTitle = input.operationsStatusTitle;
+  mockStoreSettings.operationsStatusDescription = input.operationsStatusDescription;
+  mockStoreSettings.checkoutEyebrow = input.checkoutEyebrow;
+  mockStoreSettings.checkoutIntroDescription = input.checkoutIntroDescription;
+  mockStoreSettings.buyerFormTitle = input.buyerFormTitle;
+  mockStoreSettings.buyerFormDescription = input.buyerFormDescription;
+  mockStoreSettings.buyerReadyTitle = input.buyerReadyTitle;
+  mockStoreSettings.buyerReadyDescription = input.buyerReadyDescription;
   mockStoreSettings.paymentDisplayLabel = input.paymentDisplayLabel;
   mockStoreSettings.paymentQrisPayload = input.paymentQrisPayload;
   mockStoreSettings.paymentMerchantName = input.paymentMerchantName;
@@ -191,6 +212,18 @@ export function updateMockStoreSettings(input: StoreSettingsInput) {
   mockStoreSettings.paymentCheckoutTitle = input.paymentCheckoutTitle;
   mockStoreSettings.paymentCheckoutDescription = input.paymentCheckoutDescription;
   mockStoreSettings.paymentInstructionLines = input.paymentInstructionLines;
+  mockStoreSettings.paymentConfirmTitle = input.paymentConfirmTitle;
+  mockStoreSettings.paymentConfirmDescription = input.paymentConfirmDescription;
+  mockStoreSettings.paymentSuccessMessage = input.paymentSuccessMessage;
+  mockStoreSettings.paymentNoteLabel = input.paymentNoteLabel;
+  mockStoreSettings.proofUploadLabel = input.proofUploadLabel;
+  mockStoreSettings.paymentConfirmButtonLabel = input.paymentConfirmButtonLabel;
+  mockStoreSettings.checkoutContinueButtonLabel = input.checkoutContinueButtonLabel;
+  mockStoreSettings.trackerTitle = input.trackerTitle;
+  mockStoreSettings.operationalNotesTitle = input.operationalNotesTitle;
+  mockStoreSettings.operationalNotesDescription = input.operationalNotesDescription;
+  mockStoreSettings.operationalNotesLines = input.operationalNotesLines;
+  mockStoreSettings.orderSnapshotTitle = input.orderSnapshotTitle;
   mockStoreSettings.updatedAt = new Date().toISOString();
 
   return mockStoreSettings;

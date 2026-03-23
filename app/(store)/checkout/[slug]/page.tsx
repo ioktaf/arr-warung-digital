@@ -123,12 +123,11 @@ export default async function CheckoutPage({
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-sm uppercase tracking-[0.22em] text-muted">
-                  Checkout Produk
+                  {settings.checkoutEyebrow}
                 </p>
                 <h1 className="mt-2 text-4xl font-black">{product.title}</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-                  Buyer cukup isi nama dan WhatsApp dulu. Setelah itu sistem
-                  arahkan ke QRIS dan tombol konfirmasi pembayaran.
+                  {settings.checkoutIntroDescription}
                 </p>
               </div>
               <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
@@ -160,8 +159,7 @@ export default async function CheckoutPage({
 
           {success ? (
             <div className="rounded-[24px] border border-success/20 bg-success/10 px-5 py-4 text-sm text-success">
-              Konfirmasi pembayaran sudah dikirim. Admin tinggal cek mutasi lalu
-              update status order di dashboard.
+              {settings.paymentSuccessMessage}
             </div>
           ) : null}
 
@@ -172,10 +170,9 @@ export default async function CheckoutPage({
                   <WalletCards className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">1. Isi Data Buyer</h2>
+                  <h2 className="text-2xl font-bold">{settings.buyerFormTitle}</h2>
                   <p className="text-sm leading-7 text-muted">
-                    Data ini dipakai admin untuk cocokin pembayaran dan kirim
-                    akun lewat WhatsApp.
+                    {settings.buyerFormDescription}
                   </p>
                 </div>
               </div>
@@ -208,7 +205,7 @@ export default async function CheckoutPage({
                   />
                 </label>
                 <SubmitButton
-                  idleLabel="Lanjut ke Pembayaran"
+                  idleLabel={settings.checkoutContinueButtonLabel}
                   pendingLabel="Membuat Order..."
                   className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
                 />
@@ -221,9 +218,9 @@ export default async function CheckoutPage({
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">Data Buyer Tersimpan</h2>
+                  <h2 className="text-2xl font-bold">{settings.buyerReadyTitle}</h2>
                   <p className="text-sm leading-7 text-muted">
-                    Order siap lanjut ke tahap pembayaran QRIS.
+                    {settings.buyerReadyDescription}
                   </p>
                 </div>
               </div>
@@ -337,12 +334,9 @@ export default async function CheckoutPage({
                     <Upload className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold">
-                      3. Konfirmasi Sudah Bayar
-                    </h2>
+                    <h2 className="text-2xl font-bold">{settings.paymentConfirmTitle}</h2>
                     <p className="text-sm leading-7 text-muted">
-                      Begitu form ini dikirim, order masuk ke status
-                      Awaiting Verification di dashboard admin.
+                      {settings.paymentConfirmDescription}
                     </p>
                   </div>
                 </div>
@@ -373,7 +367,7 @@ export default async function CheckoutPage({
                   />
 
                   <label className="grid gap-2 text-sm font-medium">
-                    Catatan Pembayaran
+                    {settings.paymentNoteLabel}
                     <textarea
                       name="paymentNote"
                       rows={4}
@@ -384,7 +378,7 @@ export default async function CheckoutPage({
                   </label>
 
                   <label className="grid gap-2 text-sm font-medium">
-                    Upload Bukti Bayar
+                    {settings.proofUploadLabel}
                     <input
                       type="file"
                       name="proofFile"
@@ -394,7 +388,7 @@ export default async function CheckoutPage({
                   </label>
 
                   <SubmitButton
-                    idleLabel="Konfirmasi Sudah Bayar"
+                    idleLabel={settings.paymentConfirmButtonLabel}
                     pendingLabel="Mengirim Konfirmasi..."
                     className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c26f05] disabled:cursor-not-allowed disabled:opacity-70"
                   />
@@ -407,7 +401,7 @@ export default async function CheckoutPage({
         <div className="space-y-6">
           <Card className="space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Tracker Order</h2>
+              <h2 className="text-2xl font-bold">{settings.trackerTitle}</h2>
               <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
             </div>
 
@@ -454,23 +448,23 @@ export default async function CheckoutPage({
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Catatan Operasional</h2>
+                <h2 className="text-2xl font-bold">{settings.operationalNotesTitle}</h2>
                 <p className="text-sm leading-7 text-muted">
-                  Halaman ini memang dibuat untuk workflow semi-auto.
+                  {settings.operationalNotesDescription}
                 </p>
               </div>
             </div>
 
             <div className="space-y-3 text-sm leading-7 text-muted">
-              <p>Admin tidak perlu mantengin mutasi tanpa konteks karena order masuk ke dashboard lebih dulu.</p>
-              <p>Proof upload bersifat opsional, tapi sangat membantu saat nominal order mirip-mirip.</p>
-              <p>Kalau nanti mau full-auto, struktur tabel order dan payment proof ini masih enak untuk ditingkatkan.</p>
+              {settings.operationalNotesLines.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
             </div>
           </Card>
 
           {order ? (
             <Card className="space-y-4">
-              <h2 className="text-2xl font-bold">Snapshot Order</h2>
+              <h2 className="text-2xl font-bold">{settings.orderSnapshotTitle}</h2>
               <div className="grid gap-4 rounded-[24px] border border-line bg-white/60 p-5">
                 <div>
                   <p className="text-sm text-muted">Order Ref</p>

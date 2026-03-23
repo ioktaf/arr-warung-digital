@@ -36,7 +36,8 @@ export default async function AdminLayout({
             <div className="mt-3 flex items-center gap-3">
               <SiteBrand
                 logoUrl={settings.brandLogoUrl}
-                title="ARR Warung Digital"
+                title={settings.brandName}
+                compactTitle={settings.brandCompactName}
                 iconClassName="h-12 w-12"
                 titleClassName="text-3xl font-black"
                 subtitleClassName="hidden"

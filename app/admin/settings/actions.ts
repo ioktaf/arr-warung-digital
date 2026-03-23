@@ -20,7 +20,8 @@ function redirectToSettings(notice: string, tone: NoticeTone = "success"): never
 }
 
 function revalidateSettingsRoutes() {
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidatePath("/", "page");
   revalidatePath("/admin");
   revalidatePath("/admin/settings");
   revalidatePath("/checkout/[slug]", "page");
@@ -51,7 +52,23 @@ function buildStorefrontSettingsInput(
   formData: FormData,
 ): Partial<StoreSettingsInput> {
   return {
+    brandName: getTextValue(formData.get("brandName")),
+    brandCompactName: getTextValue(formData.get("brandCompactName")),
     brandLogoUrl: getTextValue(formData.get("brandLogoUrl")),
+    brandTagline: getTextValue(formData.get("brandTagline")),
+    headerStatusBadge: getTextValue(formData.get("headerStatusBadge")),
+    headerNavLabels: readStringList(
+      formData,
+      "headerNavLabel",
+      defaultStoreSettingsInput.headerNavLabels,
+    ),
+    footerDescription: getTextValue(formData.get("footerDescription")),
+    footerLinkLabels: readStringList(
+      formData,
+      "footerLinkLabel",
+      defaultStoreSettingsInput.footerLinkLabels,
+    ),
+    demoBannerText: getTextValue(formData.get("demoBannerText")),
     heroBadge: getTextValue(formData.get("heroBadge")),
     heroTitle: getTextValue(formData.get("heroTitle")),
     heroDescription: getTextValue(formData.get("heroDescription")),
@@ -76,6 +93,51 @@ function buildStorefrontSettingsInput(
       "dashboardNote",
       defaultStoreSettingsInput.dashboardNotes,
     ),
+    catalogStatusLabel: getTextValue(formData.get("catalogStatusLabel")),
+    catalogStatusDescription: getTextValue(
+      formData.get("catalogStatusDescription"),
+    ),
+    workflowStatusLabel: getTextValue(formData.get("workflowStatusLabel")),
+    workflowStatusDescription: getTextValue(
+      formData.get("workflowStatusDescription"),
+    ),
+    operationsStatusLabel: getTextValue(formData.get("operationsStatusLabel")),
+    operationsStatusTitle: getTextValue(formData.get("operationsStatusTitle")),
+    operationsStatusDescription: getTextValue(
+      formData.get("operationsStatusDescription"),
+    ),
+    checkoutEyebrow: getTextValue(formData.get("checkoutEyebrow")),
+    checkoutIntroDescription: getTextValue(
+      formData.get("checkoutIntroDescription"),
+    ),
+    buyerFormTitle: getTextValue(formData.get("buyerFormTitle")),
+    buyerFormDescription: getTextValue(formData.get("buyerFormDescription")),
+    buyerReadyTitle: getTextValue(formData.get("buyerReadyTitle")),
+    buyerReadyDescription: getTextValue(formData.get("buyerReadyDescription")),
+    paymentConfirmTitle: getTextValue(formData.get("paymentConfirmTitle")),
+    paymentConfirmDescription: getTextValue(
+      formData.get("paymentConfirmDescription"),
+    ),
+    paymentSuccessMessage: getTextValue(formData.get("paymentSuccessMessage")),
+    paymentNoteLabel: getTextValue(formData.get("paymentNoteLabel")),
+    proofUploadLabel: getTextValue(formData.get("proofUploadLabel")),
+    paymentConfirmButtonLabel: getTextValue(
+      formData.get("paymentConfirmButtonLabel"),
+    ),
+    checkoutContinueButtonLabel: getTextValue(
+      formData.get("checkoutContinueButtonLabel"),
+    ),
+    trackerTitle: getTextValue(formData.get("trackerTitle")),
+    operationalNotesTitle: getTextValue(formData.get("operationalNotesTitle")),
+    operationalNotesDescription: getTextValue(
+      formData.get("operationalNotesDescription"),
+    ),
+    operationalNotesLines: readStringList(
+      formData,
+      "operationalNotesLine",
+      defaultStoreSettingsInput.operationalNotesLines,
+    ),
+    orderSnapshotTitle: getTextValue(formData.get("orderSnapshotTitle")),
   };
 }
 

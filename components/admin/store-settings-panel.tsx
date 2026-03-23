@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
-import { CreditCard, LayoutTemplate, PencilRuler, Settings2 } from "lucide-react";
+import {
+  CreditCard,
+  LayoutTemplate,
+  Navigation,
+  PencilRuler,
+  Settings2,
+} from "lucide-react";
 
 import {
   updatePaymentSettingsAction,
@@ -95,12 +101,21 @@ export function StoreSettingsPanel({
   notice,
   noticeTone = "success",
 }: StoreSettingsPanelProps) {
-  const workflowCount = settings.workflowSteps.length;
+  const brandMark = (settings.brandCompactName || settings.brandName)
+    .split(/\s+/)
+    .map((part) => part.trim().charAt(0))
+    .filter(Boolean)
+    .slice(0, 3)
+    .join("")
+    .toUpperCase() || "ARR";
   const contentBlockCount =
-    workflowCount +
+    settings.workflowSteps.length +
     settings.stackHighlights.length +
     settings.dashboardNotes.length +
-    settings.paymentInstructionLines.length;
+    settings.paymentInstructionLines.length +
+    settings.operationalNotesLines.length +
+    settings.headerNavLabels.length +
+    settings.footerLinkLabels.length;
 
   return (
     <div className="space-y-8">
@@ -125,8 +140,8 @@ export function StoreSettingsPanel({
             {liveMode ? "Supabase" : "Fallback"}
           </p>
           <p className="mt-2 text-sm leading-7 text-muted">
-            Semua panel jualan dan pembayaran diambil dari sumber yang sama
-            supaya storefront, checkout, dan dashboard tetap sinkron.
+            Semua panel template publik, checkout, dan pembayaran diambil dari
+            sumber yang sama supaya perubahan admin langsung konsisten.
           </p>
         </Card>
 
@@ -136,12 +151,12 @@ export function StoreSettingsPanel({
             <Badge>{contentBlockCount} blok</Badge>
           </div>
           <p className="mt-6 text-sm uppercase tracking-[0.22em] text-muted">
-            Konten Terkelola
+            Template Publik
           </p>
-          <p className="mt-2 text-3xl font-black">{contentBlockCount}</p>
+          <p className="mt-2 text-3xl font-black">Editable</p>
           <p className="mt-2 text-sm leading-7 text-muted">
-            Hero, alur semi-auto, katalog, stack, dashboard note, dan panel
-            pembayaran bisa diubah tanpa buka code lagi.
+            Brand, navigasi, banner, home sections, footer, checkout flow, dan
+            instruksi pembayaran bisa diedit langsung dari dashboard.
           </p>
         </Card>
 
@@ -157,8 +172,8 @@ export function StoreSettingsPanel({
             {formatDateTime(settings.updatedAt)}
           </p>
           <p className="mt-2 text-sm leading-7 text-muted">
-            QRIS merchant dan teks checkout buyer ikut mengambil konfigurasi
-            dari panel ini.
+            QRIS merchant, copy checkout buyer, dan elemen brand ikut memakai
+            konfigurasi ini.
           </p>
         </Card>
       </section>
@@ -166,12 +181,12 @@ export function StoreSettingsPanel({
       <Card className="space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <Badge tone="brand">Storefront & Jualan</Badge>
-            <h3 className="mt-3 text-2xl font-black">Atur seluruh isi panel jualan</h3>
+            <Badge tone="brand">Template Website</Badge>
+            <h3 className="mt-3 text-2xl font-black">Edit hampir seluruh template publik</h3>
           </div>
           <p className="max-w-2xl text-sm leading-7 text-muted">
-            Bagian ini mengendalikan hero, CTA, alur kerja, copy katalog, dan
-            catatan dashboard yang tampil di storefront publik.
+            Section ini mengendalikan brand, header, footer, homepage, dan copy
+            checkout publik. Tujuannya supaya admin tidak perlu sentuh code untuk perubahan rutin.
           </p>
         </div>
 
@@ -179,89 +194,208 @@ export function StoreSettingsPanel({
           action={updateStorefrontSettingsAction}
           className="grid gap-6"
         >
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Field
-              label="Logo URL"
-              hint="Bisa pakai URL gambar publik dari Supabase Storage, CDN, atau file statis."
-              className="lg:col-span-2"
-            >
-              <TextInput
-                name="brandLogoUrl"
-                defaultValue={settings.brandLogoUrl}
-                placeholder="https://..."
-              />
-            </Field>
-            <div className="rounded-[24px] border border-line bg-white/70 p-4 lg:col-span-2">
-              <p className="text-sm font-semibold text-foreground">Preview logo website</p>
-              <div className="mt-4 flex items-center gap-4">
-                {settings.brandLogoUrl ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={settings.brandLogoUrl}
-                      alt="Logo website"
-                      className="h-16 w-16 rounded-2xl border border-line bg-white object-contain p-2"
-                    />
-                  </>
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-lg font-black tracking-[0.24em] text-white">
-                    ARR
+          <div className="rounded-[28px] border border-line bg-white/55 p-5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.22em] text-muted">
+                  Brand & Navigasi
+                </p>
+                <h4 className="mt-2 text-xl font-bold">Logo, nama brand, header, dan footer</h4>
+              </div>
+              <Navigation className="h-5 w-5 text-brand" />
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <Field label="Nama brand utama">
+                <TextInput
+                  name="brandName"
+                  defaultValue={settings.brandName}
+                />
+              </Field>
+              <Field label="Nama brand singkat">
+                <TextInput
+                  name="brandCompactName"
+                  defaultValue={settings.brandCompactName}
+                />
+              </Field>
+              <Field
+                label="Tagline header"
+                className="lg:col-span-2"
+              >
+                <TextInput
+                  name="brandTagline"
+                  defaultValue={settings.brandTagline}
+                />
+              </Field>
+              <Field label="Badge header">
+                <TextInput
+                  name="headerStatusBadge"
+                  defaultValue={settings.headerStatusBadge}
+                />
+              </Field>
+              <Field label="Pesan banner demo">
+                <TextareaInput
+                  name="demoBannerText"
+                  rows={3}
+                  defaultValue={settings.demoBannerText}
+                />
+              </Field>
+              <Field
+                label="Logo URL"
+                hint="Bisa pakai URL gambar publik dari Supabase Storage, CDN, atau file statis."
+                className="lg:col-span-2"
+              >
+                <TextInput
+                  name="brandLogoUrl"
+                  defaultValue={settings.brandLogoUrl}
+                  placeholder="https://..."
+                />
+              </Field>
+
+              <div className="rounded-[24px] border border-line bg-white/70 p-4 lg:col-span-2">
+                <p className="text-sm font-semibold text-foreground">Preview logo website</p>
+                <div className="mt-4 flex items-center gap-4">
+                  {settings.brandLogoUrl ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={settings.brandLogoUrl}
+                        alt="Logo website"
+                        className="h-16 w-16 rounded-2xl border border-line bg-white object-contain p-2"
+                      />
+                    </>
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-lg font-black tracking-[0.24em] text-white">
+                      {brandMark}
+                    </div>
+                  )}
+                  <div className="text-sm leading-7 text-muted">
+                    Logo ini akan dipakai di header storefront, footer, dan area admin.
                   </div>
-                )}
-                <div className="text-sm leading-7 text-muted">
-                  Logo ini akan dipakai di header storefront, footer, dan area admin.
                 </div>
               </div>
+
+              {settings.headerNavLabels.map((label, index) => (
+                <Field
+                  key={`header-nav-${index + 1}`}
+                  label={`Label navigasi ${index + 1}`}
+                >
+                  <TextInput
+                    name={`headerNavLabel${index + 1}`}
+                    defaultValue={label}
+                  />
+                </Field>
+              ))}
+
+              <Field
+                label="Deskripsi footer"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="footerDescription"
+                  rows={3}
+                  defaultValue={settings.footerDescription}
+                />
+              </Field>
+
+              {settings.footerLinkLabels.map((label, index) => (
+                <Field
+                  key={`footer-link-${index + 1}`}
+                  label={`Label link footer ${index + 1}`}
+                >
+                  <TextInput
+                    name={`footerLinkLabel${index + 1}`}
+                    defaultValue={label}
+                  />
+                </Field>
+              ))}
             </div>
-            <Field label="Hero badge">
-              <TextInput
-                name="heroBadge"
-                defaultValue={settings.heroBadge}
-              />
-            </Field>
-            <Field label="CTA utama">
-              <TextInput
-                name="heroPrimaryCtaLabel"
-                defaultValue={settings.heroPrimaryCtaLabel}
-              />
-            </Field>
-            <Field
-              label="Hero title"
-              className="lg:col-span-2"
-            >
-              <TextareaInput
-                name="heroTitle"
-                rows={3}
-                defaultValue={settings.heroTitle}
-              />
-            </Field>
-            <Field
-              label="Hero description"
-              className="lg:col-span-2"
-            >
-              <TextareaInput
-                name="heroDescription"
-                rows={4}
-                defaultValue={settings.heroDescription}
-              />
-            </Field>
-            <Field label="CTA kedua">
-              <TextInput
-                name="heroSecondaryCtaLabel"
-                defaultValue={settings.heroSecondaryCtaLabel}
-              />
-            </Field>
           </div>
 
           <div className="rounded-[28px] border border-line bg-white/55 p-5">
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.22em] text-muted">
-                  Workflow Semi-Auto
+                  Hero & Homepage
                 </p>
-                <h4 className="mt-2 text-xl font-bold">Copy alur buyer ke admin</h4>
+                <h4 className="mt-2 text-xl font-bold">Copy utama landing page</h4>
               </div>
               <Badge>{settings.workflowSteps.length} step</Badge>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <Field label="Hero badge">
+                <TextInput
+                  name="heroBadge"
+                  defaultValue={settings.heroBadge}
+                />
+              </Field>
+              <Field label="CTA utama">
+                <TextInput
+                  name="heroPrimaryCtaLabel"
+                  defaultValue={settings.heroPrimaryCtaLabel}
+                />
+              </Field>
+              <Field
+                label="Hero title"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="heroTitle"
+                  rows={3}
+                  defaultValue={settings.heroTitle}
+                />
+              </Field>
+              <Field
+                label="Hero description"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="heroDescription"
+                  rows={4}
+                  defaultValue={settings.heroDescription}
+                />
+              </Field>
+              <Field label="CTA kedua">
+                <TextInput
+                  name="heroSecondaryCtaLabel"
+                  defaultValue={settings.heroSecondaryCtaLabel}
+                />
+              </Field>
+              <Field label="Catalog badge">
+                <TextInput
+                  name="catalogBadge"
+                  defaultValue={settings.catalogBadge}
+                />
+              </Field>
+              <Field label="Catalog title">
+                <TextInput
+                  name="catalogTitle"
+                  defaultValue={settings.catalogTitle}
+                />
+              </Field>
+              <Field
+                label="Catalog description"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="catalogDescription"
+                  rows={4}
+                  defaultValue={settings.catalogDescription}
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-line bg-white/55 p-5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.22em] text-muted">
+                  Card Summary & Workflow
+                </p>
+                <h4 className="mt-2 text-xl font-bold">Stat cards dan alur semi-auto</h4>
+              </div>
+              <Badge tone="accent">{settings.stackHighlights.length + settings.dashboardNotes.length} item</Badge>
             </div>
 
             <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -311,45 +445,56 @@ export function StoreSettingsPanel({
                   </Field>
                 </div>
               ))}
-            </div>
-          </div>
 
-          <div className="rounded-[28px] border border-line bg-white/55 p-5">
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.22em] text-muted">
-                  Katalog & Notes
-                </p>
-                <h4 className="mt-2 text-xl font-bold">Atur panel katalog publik</h4>
-              </div>
-              <Badge tone="accent">
-                {settings.stackHighlights.length + settings.dashboardNotes.length} item
-              </Badge>
-            </div>
-
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <Field label="Catalog badge">
+              <Field label="Judul card catalog status">
                 <TextInput
-                  name="catalogBadge"
-                  defaultValue={settings.catalogBadge}
+                  name="catalogStatusLabel"
+                  defaultValue={settings.catalogStatusLabel}
                 />
               </Field>
-              <Field label="Catalog title">
+              <Field label="Deskripsi card catalog status">
+                <TextareaInput
+                  name="catalogStatusDescription"
+                  rows={3}
+                  defaultValue={settings.catalogStatusDescription}
+                />
+              </Field>
+              <Field label="Judul card workflow admin">
                 <TextInput
-                  name="catalogTitle"
-                  defaultValue={settings.catalogTitle}
+                  name="workflowStatusLabel"
+                  defaultValue={settings.workflowStatusLabel}
+                />
+              </Field>
+              <Field label="Deskripsi card workflow admin">
+                <TextareaInput
+                  name="workflowStatusDescription"
+                  rows={3}
+                  defaultValue={settings.workflowStatusDescription}
+                />
+              </Field>
+              <Field label="Judul card operasional">
+                <TextInput
+                  name="operationsStatusLabel"
+                  defaultValue={settings.operationsStatusLabel}
+                />
+              </Field>
+              <Field label="Title card operasional">
+                <TextInput
+                  name="operationsStatusTitle"
+                  defaultValue={settings.operationsStatusTitle}
                 />
               </Field>
               <Field
-                label="Catalog description"
+                label="Deskripsi card operasional"
                 className="lg:col-span-2"
               >
                 <TextareaInput
-                  name="catalogDescription"
-                  rows={4}
-                  defaultValue={settings.catalogDescription}
+                  name="operationsStatusDescription"
+                  rows={3}
+                  defaultValue={settings.operationsStatusDescription}
                 />
               </Field>
+
               <Field label="Stack badge">
                 <TextInput
                   name="stackBadge"
@@ -391,14 +536,168 @@ export function StoreSettingsPanel({
             </div>
           </div>
 
+          <div className="rounded-[28px] border border-line bg-white/55 p-5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.22em] text-muted">
+                  Checkout Template
+                </p>
+                <h4 className="mt-2 text-xl font-bold">Copy buyer dari form sampai tracker</h4>
+              </div>
+              <Badge tone="brand">{settings.operationalNotesLines.length} notes</Badge>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <Field label="Checkout eyebrow">
+                <TextInput
+                  name="checkoutEyebrow"
+                  defaultValue={settings.checkoutEyebrow}
+                />
+              </Field>
+              <Field label="Judul tracker">
+                <TextInput
+                  name="trackerTitle"
+                  defaultValue={settings.trackerTitle}
+                />
+              </Field>
+              <Field
+                label="Deskripsi intro checkout"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="checkoutIntroDescription"
+                  rows={4}
+                  defaultValue={settings.checkoutIntroDescription}
+                />
+              </Field>
+              <Field label="Judul form buyer">
+                <TextInput
+                  name="buyerFormTitle"
+                  defaultValue={settings.buyerFormTitle}
+                />
+              </Field>
+              <Field label="Tombol lanjut checkout">
+                <TextInput
+                  name="checkoutContinueButtonLabel"
+                  defaultValue={settings.checkoutContinueButtonLabel}
+                />
+              </Field>
+              <Field
+                label="Deskripsi form buyer"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="buyerFormDescription"
+                  rows={3}
+                  defaultValue={settings.buyerFormDescription}
+                />
+              </Field>
+              <Field label="Judul buyer ready">
+                <TextInput
+                  name="buyerReadyTitle"
+                  defaultValue={settings.buyerReadyTitle}
+                />
+              </Field>
+              <Field
+                label="Deskripsi buyer ready"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="buyerReadyDescription"
+                  rows={3}
+                  defaultValue={settings.buyerReadyDescription}
+                />
+              </Field>
+              <Field label="Judul konfirmasi bayar">
+                <TextInput
+                  name="paymentConfirmTitle"
+                  defaultValue={settings.paymentConfirmTitle}
+                />
+              </Field>
+              <Field label="Tombol konfirmasi bayar">
+                <TextInput
+                  name="paymentConfirmButtonLabel"
+                  defaultValue={settings.paymentConfirmButtonLabel}
+                />
+              </Field>
+              <Field
+                label="Deskripsi konfirmasi bayar"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="paymentConfirmDescription"
+                  rows={3}
+                  defaultValue={settings.paymentConfirmDescription}
+                />
+              </Field>
+              <Field
+                label="Pesan sukses konfirmasi bayar"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="paymentSuccessMessage"
+                  rows={3}
+                  defaultValue={settings.paymentSuccessMessage}
+                />
+              </Field>
+              <Field label="Label catatan pembayaran">
+                <TextInput
+                  name="paymentNoteLabel"
+                  defaultValue={settings.paymentNoteLabel}
+                />
+              </Field>
+              <Field label="Label upload bukti bayar">
+                <TextInput
+                  name="proofUploadLabel"
+                  defaultValue={settings.proofUploadLabel}
+                />
+              </Field>
+              <Field label="Judul catatan operasional">
+                <TextInput
+                  name="operationalNotesTitle"
+                  defaultValue={settings.operationalNotesTitle}
+                />
+              </Field>
+              <Field label="Judul snapshot order">
+                <TextInput
+                  name="orderSnapshotTitle"
+                  defaultValue={settings.orderSnapshotTitle}
+                />
+              </Field>
+              <Field
+                label="Deskripsi catatan operasional"
+                className="lg:col-span-2"
+              >
+                <TextareaInput
+                  name="operationalNotesDescription"
+                  rows={3}
+                  defaultValue={settings.operationalNotesDescription}
+                />
+              </Field>
+
+              {settings.operationalNotesLines.map((line, index) => (
+                <Field
+                  key={`operational-line-${index + 1}`}
+                  label={`Catatan operasional ${index + 1}`}
+                >
+                  <TextareaInput
+                    name={`operationalNotesLine${index + 1}`}
+                    rows={3}
+                    defaultValue={line}
+                  />
+                </Field>
+              ))}
+            </div>
+          </div>
+
           <div className="flex flex-wrap items-center gap-3">
             <SubmitButton
-              idleLabel="Simpan Pengaturan Jualan"
-              pendingLabel="Menyimpan Pengaturan..."
+              idleLabel="Simpan Template Website"
+              pendingLabel="Menyimpan Template..."
               className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
             />
             <p className="text-sm leading-7 text-muted">
-              Setelah disimpan, storefront publik dan semua slug checkout akan ikut direfresh otomatis.
+              Setelah disimpan, header, footer, homepage, dan slug checkout publik akan ikut direfresh otomatis.
             </p>
           </div>
         </form>
@@ -411,7 +710,7 @@ export function StoreSettingsPanel({
             <h3 className="mt-3 text-2xl font-black">Atur panel checkout dan QRIS</h3>
           </div>
           <p className="max-w-2xl text-sm leading-7 text-muted">
-            QRIS di checkout buyer sekarang dihasilkan dari payload yang kamu simpan di sini. Nominal produk tetap mengikuti harga item masing-masing.
+            QRIS di checkout buyer dihasilkan dari payload yang kamu simpan di sini. Nominal produk tetap mengikuti harga item masing-masing.
           </p>
         </div>
 
@@ -438,14 +737,14 @@ export function StoreSettingsPanel({
                 defaultValue={settings.paymentMerchantCity}
               />
             </Field>
-            <Field label="Judul panel checkout">
+            <Field label="Judul panel pembayaran QRIS">
               <TextInput
                 name="paymentCheckoutTitle"
                 defaultValue={settings.paymentCheckoutTitle}
               />
             </Field>
             <Field
-              label="Deskripsi panel checkout"
+              label="Deskripsi panel pembayaran QRIS"
               className="lg:col-span-2"
             >
               <TextareaInput
@@ -517,8 +816,8 @@ export function StoreSettingsPanel({
           <div>
             <h3 className="text-2xl font-bold">Catatan implementasi</h3>
             <p className="text-sm leading-7 text-muted">
-              Semua perubahan di halaman ini langsung memengaruhi storefront,
-              checkout pembayaran, dan panel admin yang terkait.
+              Template publik yang sekarang tampil di website sudah dipindah ke
+              panel admin supaya perubahan rutin bisa dikerjakan tanpa edit code.
             </p>
           </div>
         </div>

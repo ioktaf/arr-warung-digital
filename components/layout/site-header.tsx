@@ -4,17 +4,17 @@ import { SiteBrand } from "@/components/layout/site-brand";
 import { Badge } from "@/components/ui/badge";
 import type { StoreSettings } from "@/types/domain";
 
-const links = [
-  { href: "/#produk", label: "Produk" },
-  { href: "/#cara-kerja", label: "Alur Semi-Auto" },
-  { href: "/admin", label: "Dashboard Admin" },
-];
-
 type SiteHeaderProps = {
   settings: StoreSettings;
 };
 
 export function SiteHeader({ settings }: SiteHeaderProps) {
+  const links = [
+    { href: "/#produk", label: settings.headerNavLabels[0] },
+    { href: "/#cara-kerja", label: settings.headerNavLabels[1] },
+    { href: "/admin", label: settings.headerNavLabels[2] },
+  ];
+
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -24,9 +24,9 @@ export function SiteHeader({ settings }: SiteHeaderProps) {
         >
           <SiteBrand
             logoUrl={settings.brandLogoUrl}
-            title="ARR Warung Digital"
-            compactTitle="Warung Digital"
-            subtitle="Guest checkout, QRIS, manual mutation check"
+            title={settings.brandName}
+            compactTitle={settings.brandCompactName}
+            subtitle={settings.brandTagline}
           />
         </Link>
 
@@ -40,7 +40,7 @@ export function SiteHeader({ settings }: SiteHeaderProps) {
               {link.label}
             </Link>
           ))}
-          <Badge tone="accent">Semi-Auto</Badge>
+          <Badge tone="accent">{settings.headerStatusBadge}</Badge>
         </nav>
       </div>
     </header>

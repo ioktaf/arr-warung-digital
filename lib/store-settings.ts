@@ -47,8 +47,36 @@ const defaultPaymentInstructionLines = [
   "Upload bukti transfer kalau ada biar admin lebih cepat cek.",
 ];
 
+const defaultHeaderNavLabels = [
+  "Produk",
+  "Alur Semi-Auto",
+  "Dashboard Admin",
+];
+
+const defaultFooterLinkLabels = [
+  "Storefront",
+  "Admin",
+  "Checkout Demo",
+];
+
+const defaultOperationalNotesLines = [
+  "Admin tidak perlu mantengin mutasi tanpa konteks karena order masuk ke dashboard lebih dulu.",
+  "Proof upload bersifat opsional, tapi sangat membantu saat nominal order mirip-mirip.",
+  "Kalau nanti mau full-auto, struktur tabel order dan payment proof ini masih enak untuk ditingkatkan.",
+];
+
 export const defaultStoreSettingsInput: StoreSettingsInput = {
+  brandName: "ARR Warung Digital",
+  brandCompactName: "Warung Digital",
   brandLogoUrl: "",
+  brandTagline: "Guest checkout, QRIS, manual mutation check",
+  headerStatusBadge: "Semi-Auto",
+  headerNavLabels: defaultHeaderNavLabels,
+  footerDescription:
+    "Fondasi MVP untuk jualan akun digital dengan verifikasi pembayaran manual yang tetap rapi.",
+  footerLinkLabels: defaultFooterLinkLabels,
+  demoBannerText:
+    "Mode demo aktif. Isi `.env.local` dan jalankan `supabase/schema.sql` di Supabase SQL Editor untuk workflow live.",
   heroBadge: "Storefront MVP",
   heroTitle:
     "Jualan produk digital dengan checkout cepat, QRIS, dan verifikasi mutasi manual yang tetap terasa modern.",
@@ -69,6 +97,24 @@ export const defaultStoreSettingsInput: StoreSettingsInput = {
   stackHighlights: defaultStackHighlights,
   dashboardBadge: "Catatan Dashboard",
   dashboardNotes: defaultDashboardNotes,
+  catalogStatusLabel: "Status Catalog",
+  catalogStatusDescription:
+    "Data produk otomatis fallback ke mock jika env Supabase belum diisi.",
+  workflowStatusLabel: "Workflow Admin",
+  workflowStatusDescription:
+    "Service role dipakai di server untuk bikin order, upload bukti bayar, dan baca dashboard admin.",
+  operationsStatusLabel: "Operasional",
+  operationsStatusTitle: "Manual but guided",
+  operationsStatusDescription:
+    "Fokus admin tetap jelas: cek order yang butuh verifikasi dulu, baru lanjut kirim akun.",
+  checkoutEyebrow: "Checkout Produk",
+  checkoutIntroDescription:
+    "Buyer cukup isi nama dan WhatsApp dulu. Setelah itu sistem arahkan ke QRIS dan tombol konfirmasi pembayaran.",
+  buyerFormTitle: "1. Isi Data Buyer",
+  buyerFormDescription:
+    "Data ini dipakai admin untuk cocokin pembayaran dan kirim akun lewat WhatsApp.",
+  buyerReadyTitle: "Data Buyer Tersimpan",
+  buyerReadyDescription: "Order siap lanjut ke tahap pembayaran QRIS.",
   paymentDisplayLabel: "QRIS Statis ARR WARUNG DIGITAL",
   paymentQrisPayload:
     "00020101021126760024ID.CO.SPEEDCASH.MERCHANT01189360081530002045920215ID10250020459260303UKE51440014ID.CO.QRIS.WWW0215ID10254280460520303UKE5204526253033605802ID5918ARR WARUNG DIGITAL6006KENDAL61055138162330509S3443864101091263033620703A016304E9B0",
@@ -78,6 +124,21 @@ export const defaultStoreSettingsInput: StoreSettingsInput = {
   paymentCheckoutDescription:
     "Pakai QRIS statis merchant dulu. Setelah transfer, buyer klik konfirmasi pembayaran di bawah.",
   paymentInstructionLines: defaultPaymentInstructionLines,
+  paymentConfirmTitle: "3. Konfirmasi Sudah Bayar",
+  paymentConfirmDescription:
+    "Begitu form ini dikirim, order masuk ke status Awaiting Verification di dashboard admin.",
+  paymentSuccessMessage:
+    "Konfirmasi pembayaran sudah dikirim. Admin tinggal cek mutasi lalu update status order di dashboard.",
+  paymentNoteLabel: "Catatan Pembayaran",
+  proofUploadLabel: "Upload Bukti Bayar",
+  paymentConfirmButtonLabel: "Konfirmasi Sudah Bayar",
+  checkoutContinueButtonLabel: "Lanjut ke Pembayaran",
+  trackerTitle: "Tracker Order",
+  operationalNotesTitle: "Catatan Operasional",
+  operationalNotesDescription:
+    "Halaman ini memang dibuat untuk workflow semi-auto.",
+  operationalNotesLines: defaultOperationalNotesLines,
+  orderSnapshotTitle: "Snapshot Order",
 };
 
 export const defaultStoreSettings: StoreSettings = {
@@ -91,7 +152,15 @@ export function extractStoreSettingsInput(
   settings: StoreSettings | StoreSettingsInput,
 ): StoreSettingsInput {
   return {
+    brandName: settings.brandName,
+    brandCompactName: settings.brandCompactName,
     brandLogoUrl: settings.brandLogoUrl,
+    brandTagline: settings.brandTagline,
+    headerStatusBadge: settings.headerStatusBadge,
+    headerNavLabels: settings.headerNavLabels,
+    footerDescription: settings.footerDescription,
+    footerLinkLabels: settings.footerLinkLabels,
+    demoBannerText: settings.demoBannerText,
     heroBadge: settings.heroBadge,
     heroTitle: settings.heroTitle,
     heroDescription: settings.heroDescription,
@@ -108,6 +177,19 @@ export function extractStoreSettingsInput(
     stackHighlights: settings.stackHighlights,
     dashboardBadge: settings.dashboardBadge,
     dashboardNotes: settings.dashboardNotes,
+    catalogStatusLabel: settings.catalogStatusLabel,
+    catalogStatusDescription: settings.catalogStatusDescription,
+    workflowStatusLabel: settings.workflowStatusLabel,
+    workflowStatusDescription: settings.workflowStatusDescription,
+    operationsStatusLabel: settings.operationsStatusLabel,
+    operationsStatusTitle: settings.operationsStatusTitle,
+    operationsStatusDescription: settings.operationsStatusDescription,
+    checkoutEyebrow: settings.checkoutEyebrow,
+    checkoutIntroDescription: settings.checkoutIntroDescription,
+    buyerFormTitle: settings.buyerFormTitle,
+    buyerFormDescription: settings.buyerFormDescription,
+    buyerReadyTitle: settings.buyerReadyTitle,
+    buyerReadyDescription: settings.buyerReadyDescription,
     paymentDisplayLabel: settings.paymentDisplayLabel,
     paymentQrisPayload: settings.paymentQrisPayload,
     paymentMerchantName: settings.paymentMerchantName,
@@ -115,6 +197,18 @@ export function extractStoreSettingsInput(
     paymentCheckoutTitle: settings.paymentCheckoutTitle,
     paymentCheckoutDescription: settings.paymentCheckoutDescription,
     paymentInstructionLines: settings.paymentInstructionLines,
+    paymentConfirmTitle: settings.paymentConfirmTitle,
+    paymentConfirmDescription: settings.paymentConfirmDescription,
+    paymentSuccessMessage: settings.paymentSuccessMessage,
+    paymentNoteLabel: settings.paymentNoteLabel,
+    proofUploadLabel: settings.proofUploadLabel,
+    paymentConfirmButtonLabel: settings.paymentConfirmButtonLabel,
+    checkoutContinueButtonLabel: settings.checkoutContinueButtonLabel,
+    trackerTitle: settings.trackerTitle,
+    operationalNotesTitle: settings.operationalNotesTitle,
+    operationalNotesDescription: settings.operationalNotesDescription,
+    operationalNotesLines: settings.operationalNotesLines,
+    orderSnapshotTitle: settings.orderSnapshotTitle,
   };
 }
 
@@ -151,9 +245,38 @@ export function normalizeStoreSettingsInput(
   input: Partial<StoreSettingsInput>,
 ): StoreSettingsInput {
   return {
+    brandName: normalizeText(input.brandName, defaultStoreSettingsInput.brandName),
+    brandCompactName: normalizeText(
+      input.brandCompactName,
+      defaultStoreSettingsInput.brandCompactName,
+    ),
     brandLogoUrl: normalizeText(
       input.brandLogoUrl,
       defaultStoreSettingsInput.brandLogoUrl,
+    ),
+    brandTagline: normalizeText(
+      input.brandTagline,
+      defaultStoreSettingsInput.brandTagline,
+    ),
+    headerStatusBadge: normalizeText(
+      input.headerStatusBadge,
+      defaultStoreSettingsInput.headerStatusBadge,
+    ),
+    headerNavLabels: normalizeStringList(
+      input.headerNavLabels,
+      defaultStoreSettingsInput.headerNavLabels,
+    ),
+    footerDescription: normalizeText(
+      input.footerDescription,
+      defaultStoreSettingsInput.footerDescription,
+    ),
+    footerLinkLabels: normalizeStringList(
+      input.footerLinkLabels,
+      defaultStoreSettingsInput.footerLinkLabels,
+    ),
+    demoBannerText: normalizeText(
+      input.demoBannerText,
+      defaultStoreSettingsInput.demoBannerText,
     ),
     heroBadge: normalizeText(input.heroBadge, defaultStoreSettingsInput.heroBadge),
     heroTitle: normalizeText(input.heroTitle, defaultStoreSettingsInput.heroTitle),
@@ -210,6 +333,58 @@ export function normalizeStoreSettingsInput(
       input.dashboardNotes,
       defaultStoreSettingsInput.dashboardNotes,
     ),
+    catalogStatusLabel: normalizeText(
+      input.catalogStatusLabel,
+      defaultStoreSettingsInput.catalogStatusLabel,
+    ),
+    catalogStatusDescription: normalizeText(
+      input.catalogStatusDescription,
+      defaultStoreSettingsInput.catalogStatusDescription,
+    ),
+    workflowStatusLabel: normalizeText(
+      input.workflowStatusLabel,
+      defaultStoreSettingsInput.workflowStatusLabel,
+    ),
+    workflowStatusDescription: normalizeText(
+      input.workflowStatusDescription,
+      defaultStoreSettingsInput.workflowStatusDescription,
+    ),
+    operationsStatusLabel: normalizeText(
+      input.operationsStatusLabel,
+      defaultStoreSettingsInput.operationsStatusLabel,
+    ),
+    operationsStatusTitle: normalizeText(
+      input.operationsStatusTitle,
+      defaultStoreSettingsInput.operationsStatusTitle,
+    ),
+    operationsStatusDescription: normalizeText(
+      input.operationsStatusDescription,
+      defaultStoreSettingsInput.operationsStatusDescription,
+    ),
+    checkoutEyebrow: normalizeText(
+      input.checkoutEyebrow,
+      defaultStoreSettingsInput.checkoutEyebrow,
+    ),
+    checkoutIntroDescription: normalizeText(
+      input.checkoutIntroDescription,
+      defaultStoreSettingsInput.checkoutIntroDescription,
+    ),
+    buyerFormTitle: normalizeText(
+      input.buyerFormTitle,
+      defaultStoreSettingsInput.buyerFormTitle,
+    ),
+    buyerFormDescription: normalizeText(
+      input.buyerFormDescription,
+      defaultStoreSettingsInput.buyerFormDescription,
+    ),
+    buyerReadyTitle: normalizeText(
+      input.buyerReadyTitle,
+      defaultStoreSettingsInput.buyerReadyTitle,
+    ),
+    buyerReadyDescription: normalizeText(
+      input.buyerReadyDescription,
+      defaultStoreSettingsInput.buyerReadyDescription,
+    ),
     paymentDisplayLabel: normalizeText(
       input.paymentDisplayLabel,
       defaultStoreSettingsInput.paymentDisplayLabel,
@@ -237,6 +412,54 @@ export function normalizeStoreSettingsInput(
     paymentInstructionLines: normalizeStringList(
       input.paymentInstructionLines,
       defaultStoreSettingsInput.paymentInstructionLines,
+    ),
+    paymentConfirmTitle: normalizeText(
+      input.paymentConfirmTitle,
+      defaultStoreSettingsInput.paymentConfirmTitle,
+    ),
+    paymentConfirmDescription: normalizeText(
+      input.paymentConfirmDescription,
+      defaultStoreSettingsInput.paymentConfirmDescription,
+    ),
+    paymentSuccessMessage: normalizeText(
+      input.paymentSuccessMessage,
+      defaultStoreSettingsInput.paymentSuccessMessage,
+    ),
+    paymentNoteLabel: normalizeText(
+      input.paymentNoteLabel,
+      defaultStoreSettingsInput.paymentNoteLabel,
+    ),
+    proofUploadLabel: normalizeText(
+      input.proofUploadLabel,
+      defaultStoreSettingsInput.proofUploadLabel,
+    ),
+    paymentConfirmButtonLabel: normalizeText(
+      input.paymentConfirmButtonLabel,
+      defaultStoreSettingsInput.paymentConfirmButtonLabel,
+    ),
+    checkoutContinueButtonLabel: normalizeText(
+      input.checkoutContinueButtonLabel,
+      defaultStoreSettingsInput.checkoutContinueButtonLabel,
+    ),
+    trackerTitle: normalizeText(
+      input.trackerTitle,
+      defaultStoreSettingsInput.trackerTitle,
+    ),
+    operationalNotesTitle: normalizeText(
+      input.operationalNotesTitle,
+      defaultStoreSettingsInput.operationalNotesTitle,
+    ),
+    operationalNotesDescription: normalizeText(
+      input.operationalNotesDescription,
+      defaultStoreSettingsInput.operationalNotesDescription,
+    ),
+    operationalNotesLines: normalizeStringList(
+      input.operationalNotesLines,
+      defaultStoreSettingsInput.operationalNotesLines,
+    ),
+    orderSnapshotTitle: normalizeText(
+      input.orderSnapshotTitle,
+      defaultStoreSettingsInput.orderSnapshotTitle,
     ),
   };
 }

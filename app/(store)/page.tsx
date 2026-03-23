@@ -66,12 +66,11 @@ export default async function StorefrontPage() {
               </Badge>
             </div>
             <p className="mt-6 text-sm uppercase tracking-[0.22em] text-muted">
-              Status Catalog
+              {settings.catalogStatusLabel}
             </p>
             <p className="mt-2 text-3xl font-black">{products.length} produk</p>
             <p className="mt-2 text-sm leading-7 text-muted">
-              Data produk otomatis fallback ke mock jika env Supabase belum
-              diisi.
+              {settings.catalogStatusDescription}
             </p>
           </Card>
 
@@ -83,14 +82,13 @@ export default async function StorefrontPage() {
               </Badge>
             </div>
             <p className="mt-6 text-sm uppercase tracking-[0.22em] text-muted">
-              Workflow Admin
+              {settings.workflowStatusLabel}
             </p>
             <p className="mt-2 text-3xl font-black">
               {serviceEnvReady ? "Semi-Auto Live" : "Preview Mode"}
             </p>
             <p className="mt-2 text-sm leading-7 text-muted">
-              Service role dipakai di server untuk bikin order, upload bukti
-              bayar, dan baca dashboard admin.
+              {settings.workflowStatusDescription}
             </p>
           </Card>
 
@@ -100,12 +98,11 @@ export default async function StorefrontPage() {
               <Badge>{lowStockProducts} low stock</Badge>
             </div>
             <p className="mt-6 text-sm uppercase tracking-[0.22em] text-muted">
-              Operasional
+              {settings.operationsStatusLabel}
             </p>
-            <p className="mt-2 text-3xl font-black">Manual but guided</p>
+            <p className="mt-2 text-3xl font-black">{settings.operationsStatusTitle}</p>
             <p className="mt-2 text-sm leading-7 text-muted">
-              Fokus admin tetap jelas: cek order yang butuh verifikasi dulu,
-              baru lanjut kirim akun.
+              {settings.operationsStatusDescription}
             </p>
           </Card>
         </div>

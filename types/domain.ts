@@ -47,7 +47,15 @@ export type StoreWorkflowStep = {
 };
 
 export type StoreSettingsInput = {
+  brandName: string;
+  brandCompactName: string;
   brandLogoUrl: string;
+  brandTagline: string;
+  headerStatusBadge: string;
+  headerNavLabels: string[];
+  footerDescription: string;
+  footerLinkLabels: string[];
+  demoBannerText: string;
   heroBadge: string;
   heroTitle: string;
   heroDescription: string;
@@ -64,6 +72,19 @@ export type StoreSettingsInput = {
   stackHighlights: string[];
   dashboardBadge: string;
   dashboardNotes: string[];
+  catalogStatusLabel: string;
+  catalogStatusDescription: string;
+  workflowStatusLabel: string;
+  workflowStatusDescription: string;
+  operationsStatusLabel: string;
+  operationsStatusTitle: string;
+  operationsStatusDescription: string;
+  checkoutEyebrow: string;
+  checkoutIntroDescription: string;
+  buyerFormTitle: string;
+  buyerFormDescription: string;
+  buyerReadyTitle: string;
+  buyerReadyDescription: string;
   paymentDisplayLabel: string;
   paymentQrisPayload: string;
   paymentMerchantName: string;
@@ -71,6 +92,18 @@ export type StoreSettingsInput = {
   paymentCheckoutTitle: string;
   paymentCheckoutDescription: string;
   paymentInstructionLines: string[];
+  paymentConfirmTitle: string;
+  paymentConfirmDescription: string;
+  paymentSuccessMessage: string;
+  paymentNoteLabel: string;
+  proofUploadLabel: string;
+  paymentConfirmButtonLabel: string;
+  checkoutContinueButtonLabel: string;
+  trackerTitle: string;
+  operationalNotesTitle: string;
+  operationalNotesDescription: string;
+  operationalNotesLines: string[];
+  orderSnapshotTitle: string;
 };
 
 export type StoreSettings = StoreSettingsInput & {

@@ -65,7 +65,15 @@ type OrderRow = {
 type StoreSettingsRow = {
   id: string;
   key: string;
+  brand_name?: string | null;
+  brand_compact_name?: string | null;
   brand_logo_url?: string | null;
+  brand_tagline?: string | null;
+  header_status_badge?: string | null;
+  header_nav_labels?: unknown;
+  footer_description?: string | null;
+  footer_link_labels?: unknown;
+  demo_banner_text?: string | null;
   hero_badge: string | null;
   hero_title: string | null;
   hero_description: string | null;
@@ -82,6 +90,19 @@ type StoreSettingsRow = {
   stack_highlights: unknown;
   dashboard_badge: string | null;
   dashboard_notes: unknown;
+  catalog_status_label?: string | null;
+  catalog_status_description?: string | null;
+  workflow_status_label?: string | null;
+  workflow_status_description?: string | null;
+  operations_status_label?: string | null;
+  operations_status_title?: string | null;
+  operations_status_description?: string | null;
+  checkout_eyebrow?: string | null;
+  checkout_intro_description?: string | null;
+  buyer_form_title?: string | null;
+  buyer_form_description?: string | null;
+  buyer_ready_title?: string | null;
+  buyer_ready_description?: string | null;
   payment_display_label: string | null;
   payment_qris_payload: string | null;
   payment_merchant_name: string | null;
@@ -89,6 +110,18 @@ type StoreSettingsRow = {
   payment_checkout_title: string | null;
   payment_checkout_description: string | null;
   payment_instruction_lines: unknown;
+  payment_confirm_title?: string | null;
+  payment_confirm_description?: string | null;
+  payment_success_message?: string | null;
+  payment_note_label?: string | null;
+  proof_upload_label?: string | null;
+  payment_confirm_button_label?: string | null;
+  checkout_continue_button_label?: string | null;
+  tracker_title?: string | null;
+  operational_notes_title?: string | null;
+  operational_notes_description?: string | null;
+  operational_notes_lines?: unknown;
+  order_snapshot_title?: string | null;
   updated_at: string;
 };
 
@@ -202,7 +235,21 @@ function mapStoreSettings(row: StoreSettingsRow): StoreSettings {
     key: row.key,
     updatedAt: row.updated_at,
     ...normalizeStoreSettingsInput({
+      brandName: row.brand_name ?? undefined,
+      brandCompactName: row.brand_compact_name ?? undefined,
       brandLogoUrl: row.brand_logo_url ?? undefined,
+      brandTagline: row.brand_tagline ?? undefined,
+      headerStatusBadge: row.header_status_badge ?? undefined,
+      headerNavLabels: normalizeTextListValue(
+        row.header_nav_labels,
+        defaultStoreSettings.headerNavLabels,
+      ),
+      footerDescription: row.footer_description ?? undefined,
+      footerLinkLabels: normalizeTextListValue(
+        row.footer_link_labels,
+        defaultStoreSettings.footerLinkLabels,
+      ),
+      demoBannerText: row.demo_banner_text ?? undefined,
       heroBadge: row.hero_badge ?? undefined,
       heroTitle: row.hero_title ?? undefined,
       heroDescription: row.hero_description ?? undefined,
@@ -228,6 +275,19 @@ function mapStoreSettings(row: StoreSettingsRow): StoreSettings {
         row.dashboard_notes,
         defaultStoreSettings.dashboardNotes,
       ),
+      catalogStatusLabel: row.catalog_status_label ?? undefined,
+      catalogStatusDescription: row.catalog_status_description ?? undefined,
+      workflowStatusLabel: row.workflow_status_label ?? undefined,
+      workflowStatusDescription: row.workflow_status_description ?? undefined,
+      operationsStatusLabel: row.operations_status_label ?? undefined,
+      operationsStatusTitle: row.operations_status_title ?? undefined,
+      operationsStatusDescription: row.operations_status_description ?? undefined,
+      checkoutEyebrow: row.checkout_eyebrow ?? undefined,
+      checkoutIntroDescription: row.checkout_intro_description ?? undefined,
+      buyerFormTitle: row.buyer_form_title ?? undefined,
+      buyerFormDescription: row.buyer_form_description ?? undefined,
+      buyerReadyTitle: row.buyer_ready_title ?? undefined,
+      buyerReadyDescription: row.buyer_ready_description ?? undefined,
       paymentDisplayLabel: row.payment_display_label ?? undefined,
       paymentQrisPayload: row.payment_qris_payload ?? undefined,
       paymentMerchantName: row.payment_merchant_name ?? undefined,
@@ -238,6 +298,23 @@ function mapStoreSettings(row: StoreSettingsRow): StoreSettings {
         row.payment_instruction_lines,
         defaultStoreSettings.paymentInstructionLines,
       ),
+      paymentConfirmTitle: row.payment_confirm_title ?? undefined,
+      paymentConfirmDescription: row.payment_confirm_description ?? undefined,
+      paymentSuccessMessage: row.payment_success_message ?? undefined,
+      paymentNoteLabel: row.payment_note_label ?? undefined,
+      proofUploadLabel: row.proof_upload_label ?? undefined,
+      paymentConfirmButtonLabel: row.payment_confirm_button_label ?? undefined,
+      checkoutContinueButtonLabel:
+        row.checkout_continue_button_label ?? undefined,
+      trackerTitle: row.tracker_title ?? undefined,
+      operationalNotesTitle: row.operational_notes_title ?? undefined,
+      operationalNotesDescription:
+        row.operational_notes_description ?? undefined,
+      operationalNotesLines: normalizeTextListValue(
+        row.operational_notes_lines,
+        defaultStoreSettings.operationalNotesLines,
+      ),
+      orderSnapshotTitle: row.order_snapshot_title ?? undefined,
     }),
   };
 }
@@ -247,7 +324,15 @@ function toStoreSettingsRowPayload(input: StoreSettingsInput) {
 
   return {
     key: "default",
+    brand_name: normalized.brandName,
+    brand_compact_name: normalized.brandCompactName,
     brand_logo_url: normalized.brandLogoUrl || null,
+    brand_tagline: normalized.brandTagline,
+    header_status_badge: normalized.headerStatusBadge,
+    header_nav_labels: normalized.headerNavLabels,
+    footer_description: normalized.footerDescription,
+    footer_link_labels: normalized.footerLinkLabels,
+    demo_banner_text: normalized.demoBannerText,
     hero_badge: normalized.heroBadge,
     hero_title: normalized.heroTitle,
     hero_description: normalized.heroDescription,
@@ -264,6 +349,19 @@ function toStoreSettingsRowPayload(input: StoreSettingsInput) {
     stack_highlights: normalized.stackHighlights,
     dashboard_badge: normalized.dashboardBadge,
     dashboard_notes: normalized.dashboardNotes,
+    catalog_status_label: normalized.catalogStatusLabel,
+    catalog_status_description: normalized.catalogStatusDescription,
+    workflow_status_label: normalized.workflowStatusLabel,
+    workflow_status_description: normalized.workflowStatusDescription,
+    operations_status_label: normalized.operationsStatusLabel,
+    operations_status_title: normalized.operationsStatusTitle,
+    operations_status_description: normalized.operationsStatusDescription,
+    checkout_eyebrow: normalized.checkoutEyebrow,
+    checkout_intro_description: normalized.checkoutIntroDescription,
+    buyer_form_title: normalized.buyerFormTitle,
+    buyer_form_description: normalized.buyerFormDescription,
+    buyer_ready_title: normalized.buyerReadyTitle,
+    buyer_ready_description: normalized.buyerReadyDescription,
     payment_display_label: normalized.paymentDisplayLabel,
     payment_qris_payload: normalized.paymentQrisPayload,
     payment_merchant_name: normalized.paymentMerchantName,
@@ -271,6 +369,18 @@ function toStoreSettingsRowPayload(input: StoreSettingsInput) {
     payment_checkout_title: normalized.paymentCheckoutTitle,
     payment_checkout_description: normalized.paymentCheckoutDescription,
     payment_instruction_lines: normalized.paymentInstructionLines,
+    payment_confirm_title: normalized.paymentConfirmTitle,
+    payment_confirm_description: normalized.paymentConfirmDescription,
+    payment_success_message: normalized.paymentSuccessMessage,
+    payment_note_label: normalized.paymentNoteLabel,
+    proof_upload_label: normalized.proofUploadLabel,
+    payment_confirm_button_label: normalized.paymentConfirmButtonLabel,
+    checkout_continue_button_label: normalized.checkoutContinueButtonLabel,
+    tracker_title: normalized.trackerTitle,
+    operational_notes_title: normalized.operationalNotesTitle,
+    operational_notes_description: normalized.operationalNotesDescription,
+    operational_notes_lines: normalized.operationalNotesLines,
+    order_snapshot_title: normalized.orderSnapshotTitle,
   };
 }
 

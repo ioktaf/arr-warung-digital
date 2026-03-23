@@ -22,8 +22,7 @@ export default async function StoreLayout({
       {!publicEnvReady || !serviceEnvReady ? (
         <div className="border-b border-line bg-accent/10">
           <div className="mx-auto max-w-7xl px-4 py-3 text-sm text-foreground sm:px-6 lg:px-8">
-            Mode demo aktif. Isi `.env.local` dan jalankan `supabase/schema.sql`
-            di Supabase SQL Editor untuk workflow live.
+            {settings.demoBannerText}
           </div>
         </div>
       ) : null}

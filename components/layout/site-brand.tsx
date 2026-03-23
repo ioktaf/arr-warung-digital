@@ -10,6 +10,18 @@ type SiteBrandProps = {
   subtitleClassName?: string;
 };
 
+function getBrandMark(source: string) {
+  const letters = source
+    .split(/\s+/)
+    .map((part) => part.trim().charAt(0))
+    .filter(Boolean)
+    .slice(0, 3)
+    .join("")
+    .toUpperCase();
+
+  return letters || "ARR";
+}
+
 export function SiteBrand({
   logoUrl,
   title,
@@ -19,6 +31,8 @@ export function SiteBrand({
   titleClassName,
   subtitleClassName,
 }: SiteBrandProps) {
+  const brandMark = getBrandMark(compactTitle ?? title);
+
   return (
     <>
       {logoUrl ? (
@@ -40,7 +54,7 @@ export function SiteBrand({
             iconClassName,
           )}
         >
-          ARR
+          {brandMark}
         </div>
       )}
       <div>
