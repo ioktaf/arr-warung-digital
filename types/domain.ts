@@ -28,6 +28,7 @@ export type Order = {
   id: string;
   buyerName: string;
   buyerWa: string;
+  uniqueCode: number;
   totalPrice: number;
   status: OrderStatus;
   proofImgUrl: string | null;

@@ -17,6 +17,7 @@ import { getCheckoutOrder, getProductBySlug, getStoreSettings } from "@/lib/data
 import {
   formatCurrency,
   formatDateTime,
+  formatUniqueCode,
   getOrderStatusMeta,
 } from "@/lib/format";
 import { getQrisImageDataUrl } from "@/lib/payment";
@@ -86,6 +87,10 @@ export default async function CheckoutPage({
 
   const orderId = getFirstValue(query.order);
   const order = orderId ? await getCheckoutOrder(orderId) : null;
+  const uniqueCodeFromQuery = Number.parseInt(
+    getFirstValue(query.uniqueCode) ?? "0",
+    10,
+  );
   const buyerName = order?.buyerName ?? getFirstValue(query.buyerName) ?? "";
   const rawBuyerWa = order?.buyerWa ?? getFirstValue(query.buyerWa) ?? "";
   const normalizedBuyerWa = normalizeWhatsappNumber(rawBuyerWa);
@@ -101,6 +106,15 @@ export default async function CheckoutPage({
   const statusMeta = getOrderStatusMeta(status);
   const buyerReady = Boolean(buyerName && normalizedBuyerWa);
   const progress = progressLabels[status];
+  const uniqueCode =
+    order?.uniqueCode ??
+    (Number.isFinite(uniqueCodeFromQuery) && uniqueCodeFromQuery > 0
+      ? uniqueCodeFromQuery
+      : 0);
+  const transferAmount = buyerReady
+    ? order?.totalPrice ?? (product.price + uniqueCode)
+    : product.price;
+  const basePrice = Math.max(transferAmount - uniqueCode, 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
@@ -135,7 +149,7 @@ export default async function CheckoutPage({
 
             <div className="grid gap-4 rounded-[24px] border border-line bg-white/60 p-5 sm:grid-cols-3">
               <div>
-                <p className="text-sm text-muted">Harga</p>
+                <p className="text-sm text-muted">Harga Dasar</p>
                 <p className="mt-2 text-2xl font-black">
                   {formatCurrency(product.price)}
                 </p>
@@ -303,13 +317,24 @@ export default async function CheckoutPage({
                         Nominal Transfer
                       </p>
                       <p className="mt-2 text-3xl font-black">
-                        {formatCurrency(product.price)}
+                        {formatCurrency(transferAmount)}
                       </p>
-                      <p className="mt-3 text-sm leading-7 text-muted">
-                        QRIS ini tetap statis di merchant {settings.paymentMerchantName}.
-                        Buyer cukup scan QR, lalu transfer sesuai nominal produk
-                        yang tampil di halaman ini.
-                      </p>
+                      {uniqueCode > 0 ? (
+                        <div className="mt-3 space-y-2 text-sm leading-7 text-muted">
+                          <p>Harga dasar: {formatCurrency(basePrice)}</p>
+                          <p>Kode unik: {formatUniqueCode(uniqueCode)}</p>
+                          <p>
+                            QRIS ini tetap statis di merchant {settings.paymentMerchantName}.
+                            Buyer cukup scan QR, lalu transfer sesuai total akhir di atas.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm leading-7 text-muted">
+                          QRIS ini tetap statis di merchant {settings.paymentMerchantName}.
+                          Buyer cukup scan QR, lalu transfer sesuai nominal produk
+                          yang tampil di halaman ini.
+                        </p>
+                      )}
                     </div>
 
                     <div className="rounded-[24px] border border-line bg-white/60 p-5">
@@ -364,6 +389,11 @@ export default async function CheckoutPage({
                     type="hidden"
                     name="buyerWa"
                     value={buyerWaDisplayValue}
+                  />
+                  <input
+                    type="hidden"
+                    name="uniqueCode"
+                    value={uniqueCode > 0 ? String(uniqueCode) : ""}
                   />
 
                   <label className="grid gap-2 text-sm font-medium">
@@ -466,6 +496,16 @@ export default async function CheckoutPage({
             <Card className="space-y-4">
               <h2 className="text-2xl font-bold">{settings.orderSnapshotTitle}</h2>
               <div className="grid gap-4 rounded-[24px] border border-line bg-white/60 p-5">
+                <div>
+                  <p className="text-sm text-muted">Total Transfer</p>
+                  <p className="mt-1 font-semibold">{formatCurrency(order.totalPrice)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted">Kode Unik</p>
+                  <p className="mt-1 font-semibold">
+                    {order.uniqueCode > 0 ? formatUniqueCode(order.uniqueCode) : "-"}
+                  </p>
+                </div>
                 <div>
                   <p className="text-sm text-muted">Order Ref</p>
                   <p className="mt-1 font-semibold">#{order.id.slice(0, 8)}</p>

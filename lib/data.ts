@@ -49,6 +49,7 @@ type OrderRow = {
   id: string;
   buyer_name: string;
   buyer_wa: string;
+  unique_code?: number | null;
   total_price: number | string;
   status: OrderStatus;
   proof_img_url: string | null;
@@ -168,6 +169,8 @@ function mapOrder(row: OrderRow): Order {
     id: row.id,
     buyerName: row.buyer_name,
     buyerWa: row.buyer_wa,
+    uniqueCode:
+      typeof row.unique_code === "number" ? Math.max(0, row.unique_code) : 0,
     totalPrice: toNumber(row.total_price),
     status: row.status,
     proofImgUrl: row.proof_img_url,
@@ -996,7 +999,7 @@ export async function getCheckoutOrder(orderId: string) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, buyer_name, buyer_wa, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*)",
+      "id, buyer_name, buyer_wa, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*)",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -1025,7 +1028,7 @@ export async function getAdminOrders() {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, buyer_name, buyer_wa, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*)",
+      "id, buyer_name, buyer_wa, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*)",
     )
     .order("created_at", { ascending: false });
 

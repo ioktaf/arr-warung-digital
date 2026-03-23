@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import {
   formatCurrency,
   formatDateTime,
+  formatUniqueCode,
   getOrderStatusMeta,
 } from "@/lib/format";
 import { formatWhatsappDisplay, formatWhatsappHref } from "@/lib/utils";
@@ -41,6 +42,7 @@ export function OrderBoard({ orders }: OrderBoardProps) {
     <div className="space-y-4">
       {orders.map((order) => {
         const statusMeta = getOrderStatusMeta(order.status);
+        const basePrice = Math.max(order.totalPrice - order.uniqueCode, 0);
 
         return (
           <Card
@@ -56,13 +58,22 @@ export function OrderBoard({ orders }: OrderBoardProps) {
                 <p className="text-sm leading-7 text-muted">
                   Buyer {order.buyerName} - {formatWhatsappDisplay(order.buyerWa)}
                 </p>
+                {order.uniqueCode > 0 ? (
+                  <p className="text-sm leading-7 text-muted">
+                    Harga dasar {formatCurrency(basePrice)} + kode unik{" "}
+                    {formatUniqueCode(order.uniqueCode)}
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex items-center gap-3">
                 <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
-                <p className="text-right text-sm text-muted">
-                  {formatCurrency(order.totalPrice)}
-                </p>
+                <div className="text-right text-sm text-muted">
+                  <p>{formatCurrency(order.totalPrice)}</p>
+                  {order.uniqueCode > 0 ? (
+                    <p className="mt-1 text-xs">Kode {formatUniqueCode(order.uniqueCode)}</p>
+                  ) : null}
+                </div>
               </div>
             </div>
 

@@ -47,6 +47,7 @@ create table if not exists public.orders (
   product_id uuid not null references public.products(id) on delete restrict,
   buyer_name text not null,
   buyer_wa text not null,
+  unique_code integer not null default 0 check (unique_code >= 0 and unique_code <= 999),
   total_price numeric(12, 2) not null check (total_price >= 0),
   status public.order_status not null default 'pending',
   proof_img_url text,
@@ -123,6 +124,9 @@ create table if not exists public.store_settings (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.orders
+add column if not exists unique_code integer not null default 0;
 
 alter table public.store_settings
 add column if not exists brand_logo_url text;
@@ -430,10 +434,11 @@ values (
   'ARR WARUNG DIGITAL',
   'KENDAL',
   '2. Transfer via QRIS',
-  'Pakai QRIS statis merchant dulu. Setelah transfer, buyer klik konfirmasi pembayaran di bawah.',
+  'Pakai QRIS statis merchant dulu. Total transfer mengikuti order dan sudah termasuk kode unik untuk bantu admin cek mutasi.',
   '[
     "Scan QRIS merchant ARR WARUNG DIGITAL.",
-    "Pastikan nominal yang dibayar sama dengan harga produk.",
+    "Perhatikan total transfer di halaman checkout karena nominal ini sudah termasuk kode unik.",
+    "Transfer sesuai total akhir, bukan harga dasar produk.",
     "Kembali ke halaman ini lalu klik konfirmasi bayar.",
     "Upload bukti transfer kalau ada biar admin lebih cepat cek."
   ]'::jsonb,
@@ -455,6 +460,27 @@ values (
   'Snapshot Order'
 )
 on conflict (key) do nothing;
+
+update public.store_settings
+set payment_checkout_description = 'Pakai QRIS statis merchant dulu. Total transfer mengikuti order dan sudah termasuk kode unik untuk bantu admin cek mutasi.'
+where key = 'default'
+  and payment_checkout_description = 'Pakai QRIS statis merchant dulu. Setelah transfer, buyer klik konfirmasi pembayaran di bawah.';
+
+update public.store_settings
+set payment_instruction_lines = '[
+  "Scan QRIS merchant ARR WARUNG DIGITAL.",
+  "Perhatikan total transfer di halaman checkout karena nominal ini sudah termasuk kode unik.",
+  "Transfer sesuai total akhir, bukan harga dasar produk.",
+  "Kembali ke halaman ini lalu klik konfirmasi bayar.",
+  "Upload bukti transfer kalau ada biar admin lebih cepat cek."
+]'::jsonb
+where key = 'default'
+  and payment_instruction_lines = '[
+    "Scan QRIS merchant ARR WARUNG DIGITAL.",
+    "Pastikan nominal yang dibayar sama dengan harga produk.",
+    "Kembali ke halaman ini lalu klik konfirmasi bayar.",
+    "Upload bukti transfer kalau ada biar admin lebih cepat cek."
+  ]'::jsonb;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (

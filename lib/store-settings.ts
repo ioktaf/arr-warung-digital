@@ -42,7 +42,8 @@ const defaultDashboardNotes = [
 
 const defaultPaymentInstructionLines = [
   "Scan QRIS merchant ARR WARUNG DIGITAL.",
-  "Pastikan nominal yang dibayar sama dengan harga produk.",
+  "Perhatikan total transfer di halaman checkout karena nominal ini sudah termasuk kode unik.",
+  "Transfer sesuai total akhir, bukan harga dasar produk.",
   "Kembali ke halaman ini lalu klik konfirmasi bayar.",
   "Upload bukti transfer kalau ada biar admin lebih cepat cek.",
 ];
@@ -122,7 +123,7 @@ export const defaultStoreSettingsInput: StoreSettingsInput = {
   paymentMerchantCity: "KENDAL",
   paymentCheckoutTitle: "2. Transfer via QRIS",
   paymentCheckoutDescription:
-    "Pakai QRIS statis merchant dulu. Setelah transfer, buyer klik konfirmasi pembayaran di bawah.",
+    "Pakai QRIS statis merchant dulu. Total transfer mengikuti order dan sudah termasuk kode unik untuk bantu admin cek mutasi.",
   paymentInstructionLines: defaultPaymentInstructionLines,
   paymentConfirmTitle: "3. Konfirmasi Sudah Bayar",
   paymentConfirmDescription:

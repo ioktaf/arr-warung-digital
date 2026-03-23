@@ -42,6 +42,11 @@ export function formatCurrency(value: number) {
   }).format(value);
 }
 
+export function formatUniqueCode(value: number) {
+  const normalized = Math.max(0, Math.floor(value));
+  return String(normalized).padStart(3, "0");
+}
+
 export function formatDateTime(value: string | null) {
   if (!value) {
     return "-";

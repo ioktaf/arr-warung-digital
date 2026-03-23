@@ -118,7 +118,7 @@ export default async function AdminOrdersPage() {
 
             <div className="space-y-3 text-sm leading-7 text-muted">
               <p>1. Buka order dengan status Awaiting Verification.</p>
-              <p>2. Cek mutasi dari nominal, catatan buyer, dan bukti bayar.</p>
+              <p>2. Cek mutasi dari total transfer, kode unik, catatan buyer, dan bukti bayar.</p>
               <p>3. Setelah cocok, ubah ke Paid lalu kirim akun via WhatsApp.</p>
               <p>4. Tutup order ke Completed setelah buyer menerima akses.</p>
             </div>
