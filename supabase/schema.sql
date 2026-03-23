@@ -141,7 +141,43 @@ add column if not exists unique_code integer not null default 0;
 do $$
 declare
   constraint_name text;
+  target_order record;
+  replacement_code integer;
 begin
+  update public.orders
+  set unique_code = 0
+  where unique_code < 0;
+
+  for target_order in
+    select id
+    from public.orders
+    where unique_code > 299
+      and status in ('pending', 'awaiting_verification', 'paid')
+    order by created_at, id
+  loop
+    select candidate.code
+    into replacement_code
+    from generate_series(1, 299) as candidate(code)
+    where not exists (
+      select 1
+      from public.orders existing_order
+      where existing_order.id <> target_order.id
+        and existing_order.status in ('pending', 'awaiting_verification', 'paid')
+        and existing_order.unique_code = candidate.code
+    )
+    order by candidate.code
+    limit 1;
+
+    update public.orders
+    set unique_code = coalesce(replacement_code, 0)
+    where id = target_order.id;
+  end loop;
+
+  update public.orders
+  set unique_code = ((unique_code - 1) % 299) + 1
+  where unique_code > 299
+    and status not in ('pending', 'awaiting_verification', 'paid');
+
   for constraint_name in
     select conname
     from pg_constraint
