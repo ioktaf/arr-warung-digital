@@ -47,6 +47,7 @@ export type StoreWorkflowStep = {
 };
 
 export type StoreSettingsInput = {
+  brandLogoUrl: string;
   heroBadge: string;
   heroTitle: string;
   heroDescription: string;

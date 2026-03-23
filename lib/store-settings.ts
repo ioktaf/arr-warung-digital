@@ -48,6 +48,7 @@ const defaultPaymentInstructionLines = [
 ];
 
 export const defaultStoreSettingsInput: StoreSettingsInput = {
+  brandLogoUrl: "",
   heroBadge: "Storefront MVP",
   heroTitle:
     "Jualan produk digital dengan checkout cepat, QRIS, dan verifikasi mutasi manual yang tetap terasa modern.",
@@ -90,6 +91,7 @@ export function extractStoreSettingsInput(
   settings: StoreSettings | StoreSettingsInput,
 ): StoreSettingsInput {
   return {
+    brandLogoUrl: settings.brandLogoUrl,
     heroBadge: settings.heroBadge,
     heroTitle: settings.heroTitle,
     heroDescription: settings.heroDescription,
@@ -149,6 +151,10 @@ export function normalizeStoreSettingsInput(
   input: Partial<StoreSettingsInput>,
 ): StoreSettingsInput {
   return {
+    brandLogoUrl: normalizeText(
+      input.brandLogoUrl,
+      defaultStoreSettingsInput.brandLogoUrl,
+    ),
     heroBadge: normalizeText(input.heroBadge, defaultStoreSettingsInput.heroBadge),
     heroTitle: normalizeText(input.heroTitle, defaultStoreSettingsInput.heroTitle),
     heroDescription: normalizeText(

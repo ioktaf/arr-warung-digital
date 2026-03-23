@@ -63,6 +63,7 @@ create table if not exists public.orders (
 create table if not exists public.store_settings (
   id uuid primary key default gen_random_uuid(),
   key text not null unique default 'default',
+  brand_logo_url text,
   hero_badge text not null default 'Storefront MVP',
   hero_title text not null,
   hero_description text not null,
@@ -89,6 +90,9 @@ create table if not exists public.store_settings (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.store_settings
+add column if not exists brand_logo_url text;
 
 create index if not exists idx_products_category on public.products(category);
 create index if not exists idx_products_is_active on public.products(is_active);
@@ -177,6 +181,7 @@ with check (true);
 
 insert into public.store_settings (
   key,
+  brand_logo_url,
   hero_badge,
   hero_title,
   hero_description,
@@ -203,6 +208,7 @@ insert into public.store_settings (
 )
 values (
   'default',
+  null,
   'Storefront MVP',
   'Jualan produk digital dengan checkout cepat, QRIS, dan verifikasi mutasi manual yang tetap terasa modern.',
   'Buyer bisa checkout tanpa login, admin dapat notifikasi order yang perlu dicek, dan semua fondasinya sudah disiapkan buat nyambung ke Supabase.',

@@ -2,9 +2,11 @@ import Link from "next/link";
 import { LayoutDashboard, Package2, Settings2, Store } from "lucide-react";
 
 import { logoutAdminAction } from "@/app/admin/login/actions";
+import { SiteBrand } from "@/components/layout/site-brand";
 import { SubmitButton } from "@/components/submit-button";
 import { Badge } from "@/components/ui/badge";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getAdminStoreSettings } from "@/lib/data";
 
 const adminLinks = [
   { href: "/admin", label: "Orders", icon: LayoutDashboard },
@@ -21,6 +23,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }>) {
   const isAuthenticated = await isAdminAuthenticated();
+  const settings = await getAdminStoreSettings();
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#eef3e6_0%,#f6f1e8_100%)]">
@@ -30,7 +33,15 @@ export default async function AdminLayout({
             <Badge tone={isAuthenticated ? "brand" : "accent"}>
               {isAuthenticated ? "Protected Admin" : "Admin Login"}
             </Badge>
-            <h1 className="mt-3 text-3xl font-black">ARR Warung Digital</h1>
+            <div className="mt-3 flex items-center gap-3">
+              <SiteBrand
+                logoUrl={settings.brandLogoUrl}
+                title="ARR Warung Digital"
+                iconClassName="h-12 w-12"
+                titleClassName="text-3xl font-black"
+                subtitleClassName="hidden"
+              />
+            </div>
             <p className="mt-2 text-sm leading-7 text-muted">
               {isAuthenticated
                 ? "Workspace admin terkunci password untuk order board, panel produk, dan konfigurasi storefront."

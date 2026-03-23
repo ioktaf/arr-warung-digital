@@ -51,6 +51,7 @@ function buildStorefrontSettingsInput(
   formData: FormData,
 ): Partial<StoreSettingsInput> {
   return {
+    brandLogoUrl: getTextValue(formData.get("brandLogoUrl")),
     heroBadge: getTextValue(formData.get("heroBadge")),
     heroTitle: getTextValue(formData.get("heroTitle")),
     heroDescription: getTextValue(formData.get("heroDescription")),

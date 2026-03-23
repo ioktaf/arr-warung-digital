@@ -167,6 +167,7 @@ export function deleteMockProduct(productId: string) {
 }
 
 export function updateMockStoreSettings(input: StoreSettingsInput) {
+  mockStoreSettings.brandLogoUrl = input.brandLogoUrl;
   mockStoreSettings.heroBadge = input.heroBadge;
   mockStoreSettings.heroTitle = input.heroTitle;
   mockStoreSettings.heroDescription = input.heroDescription;

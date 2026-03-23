@@ -65,6 +65,7 @@ type OrderRow = {
 type StoreSettingsRow = {
   id: string;
   key: string;
+  brand_logo_url?: string | null;
   hero_badge: string | null;
   hero_title: string | null;
   hero_description: string | null;
@@ -201,6 +202,7 @@ function mapStoreSettings(row: StoreSettingsRow): StoreSettings {
     key: row.key,
     updatedAt: row.updated_at,
     ...normalizeStoreSettingsInput({
+      brandLogoUrl: row.brand_logo_url ?? undefined,
       heroBadge: row.hero_badge ?? undefined,
       heroTitle: row.hero_title ?? undefined,
       heroDescription: row.hero_description ?? undefined,
@@ -245,6 +247,7 @@ function toStoreSettingsRowPayload(input: StoreSettingsInput) {
 
   return {
     key: "default",
+    brand_logo_url: normalized.brandLogoUrl || null,
     hero_badge: normalized.heroBadge,
     hero_title: normalized.heroTitle,
     hero_description: normalized.heroDescription,

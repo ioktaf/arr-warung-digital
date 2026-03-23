@@ -44,7 +44,7 @@ export default async function AdminSettingsPage({
         <Card>
           <div className="flex items-center justify-between">
             <LayoutTemplate className="h-5 w-5 text-brand" />
-            <Badge>{settings.workflowSteps.length} step</Badge>
+            <Badge>{settings.brandLogoUrl ? "Logo aktif" : "Tanpa logo"}</Badge>
           </div>
           <p className="mt-6 text-sm uppercase tracking-[0.22em] text-muted">
             Storefront

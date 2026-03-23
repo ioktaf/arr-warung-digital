@@ -180,6 +180,39 @@ export function StoreSettingsPanel({
           className="grid gap-6"
         >
           <div className="grid gap-4 lg:grid-cols-2">
+            <Field
+              label="Logo URL"
+              hint="Bisa pakai URL gambar publik dari Supabase Storage, CDN, atau file statis."
+              className="lg:col-span-2"
+            >
+              <TextInput
+                name="brandLogoUrl"
+                defaultValue={settings.brandLogoUrl}
+                placeholder="https://..."
+              />
+            </Field>
+            <div className="rounded-[24px] border border-line bg-white/70 p-4 lg:col-span-2">
+              <p className="text-sm font-semibold text-foreground">Preview logo website</p>
+              <div className="mt-4 flex items-center gap-4">
+                {settings.brandLogoUrl ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={settings.brandLogoUrl}
+                      alt="Logo website"
+                      className="h-16 w-16 rounded-2xl border border-line bg-white object-contain p-2"
+                    />
+                  </>
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-lg font-black tracking-[0.24em] text-white">
+                    ARR
+                  </div>
+                )}
+                <div className="text-sm leading-7 text-muted">
+                  Logo ini akan dipakai di header storefront, footer, dan area admin.
+                </div>
+              </div>
+            </div>
             <Field label="Hero badge">
               <TextInput
                 name="heroBadge"

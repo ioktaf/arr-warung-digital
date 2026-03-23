@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next typegen && node -e \"const fs=require('fs'); ['tsconfig.tsbuildinfo','.next/cache/.tsbuildinfo'].forEach((file)=>{ if (fs.existsSync(file)) fs.rmSync(file,{force:true}); });\" && tsc --noEmit"
+    "typecheck": "node -e \"const fs=require('fs'); if (fs.existsSync('.next')) fs.rmSync('.next',{recursive:true,force:true}); if (fs.existsSync('tsconfig.tsbuildinfo')) fs.rmSync('tsconfig.tsbuildinfo',{force:true});\" && next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
