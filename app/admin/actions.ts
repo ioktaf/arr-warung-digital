@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireAdminSession } from "@/lib/admin-auth";
 import { updateOrderStatus } from "@/lib/data";
 import { ORDER_STATUSES, type OrderStatus } from "@/types/domain";
 
@@ -14,6 +15,8 @@ function isOrderStatus(value: string): value is OrderStatus {
 }
 
 export async function updateOrderStatusAction(formData: FormData) {
+  await requireAdminSession();
+
   const orderId = getTextValue(formData.get("orderId"));
   const productSlug = getTextValue(formData.get("productSlug"));
   const nextStatus = getTextValue(formData.get("nextStatus"));

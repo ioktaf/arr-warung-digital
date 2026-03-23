@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  ArrowLeft,
   CheckCircle2,
   Clock3,
   ShieldCheck,
@@ -18,6 +19,7 @@ import {
   formatDateTime,
   getOrderStatusMeta,
 } from "@/lib/format";
+import { getQrisImageDataUrl, paymentConfig } from "@/lib/payment";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
 import { getFirstValue } from "@/lib/utils";
 import type { OrderStatus } from "@/types/domain";
@@ -69,6 +71,7 @@ export default async function CheckoutPage({
   const { slug } = await params;
   const query = await searchParams;
   const product = await getProductBySlug(slug);
+  const qrisImageDataUrl = await getQrisImageDataUrl();
 
   if (!product) {
     notFound();
@@ -94,9 +97,10 @@ export default async function CheckoutPage({
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/"
-          className="text-sm font-medium text-muted transition hover:text-foreground"
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-foreground"
         >
-          ← Kembali ke katalog
+          <ArrowLeft className="h-4 w-4" />
+          Kembali ke katalog
         </Link>
         <Badge tone={demoMode ? "accent" : "brand"}>
           {demoMode ? "Demo Checkout" : "Live Checkout"}
@@ -257,16 +261,35 @@ export default async function CheckoutPage({
 
                 <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
                   <div className="rounded-[28px] border border-line bg-white/75 p-4">
-                    <Image
-                      src="/qris-placeholder.svg"
-                      alt="Placeholder QRIS merchant"
-                      width={640}
-                      height={640}
-                      className="w-full rounded-[22px]"
-                    />
+                    {qrisImageDataUrl ? (
+                      <Image
+                        src={qrisImageDataUrl}
+                        alt={paymentConfig.displayLabel}
+                        width={960}
+                        height={960}
+                        unoptimized
+                        className="w-full rounded-[22px]"
+                      />
+                    ) : (
+                      <div className="flex aspect-square items-center justify-center rounded-[22px] border border-dashed border-line bg-white px-6 text-center text-sm leading-7 text-muted">
+                        QRIS gagal digenerate. Cek konfigurasi payload merchant di server.
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4">
+                    <div className="rounded-[24px] border border-line bg-white/60 p-5">
+                      <p className="text-sm uppercase tracking-[0.22em] text-muted">
+                        Merchant QRIS
+                      </p>
+                      <p className="mt-2 text-2xl font-black">
+                        {paymentConfig.merchantName}
+                      </p>
+                      <p className="mt-3 text-sm leading-7 text-muted">
+                        {paymentConfig.displayLabel} - {paymentConfig.merchantCity}
+                      </p>
+                    </div>
+
                     <div className="rounded-[24px] border border-line bg-white/60 p-5">
                       <p className="text-sm uppercase tracking-[0.22em] text-muted">
                         Nominal Transfer
@@ -275,9 +298,9 @@ export default async function CheckoutPage({
                         {formatCurrency(product.price)}
                       </p>
                       <p className="mt-3 text-sm leading-7 text-muted">
-                        Kalau nanti pakai QRIS dinamis, angka ini bisa digenerate
-                        otomatis per order. Untuk MVP, nominal cukup ditampilkan
-                        jelas di halaman ini.
+                        QRIS ini tetap statis di merchant ARR WARUNG DIGITAL.
+                        Buyer cukup scan QR, lalu transfer sesuai nominal produk
+                        yang tampil di halaman ini.
                       </p>
                     </div>
 
@@ -286,9 +309,10 @@ export default async function CheckoutPage({
                         Instruksi Ringkas
                       </p>
                       <div className="mt-3 space-y-3 text-sm leading-7 text-muted">
-                        <p>1. Scan QRIS merchant atau transfer nominal yang tampil.</p>
-                        <p>2. Kembali ke halaman ini lalu klik konfirmasi bayar.</p>
-                        <p>3. Upload bukti transfer kalau ada biar admin lebih cepat cek.</p>
+                        <p>1. Scan QRIS merchant ARR WARUNG DIGITAL.</p>
+                        <p>2. Pastikan nominal yang dibayar sama dengan harga produk.</p>
+                        <p>3. Kembali ke halaman ini lalu klik konfirmasi bayar.</p>
+                        <p>4. Upload bukti transfer kalau ada biar admin lebih cepat cek.</p>
                       </div>
                     </div>
                   </div>

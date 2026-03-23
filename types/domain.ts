@@ -8,8 +8,7 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export type Product = {
-  id: string;
+export type ProductDraft = {
   title: string;
   slug: string;
   price: number;
@@ -18,6 +17,10 @@ export type Product = {
   imageUrl: string | null;
   stock: number;
   isActive: boolean;
+};
+
+export type Product = ProductDraft & {
+  id: string;
   createdAt: string;
 };
 

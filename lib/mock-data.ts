@@ -1,6 +1,6 @@
 import { getOrderStatusUpdatePayload } from "@/lib/order-status";
 import { productSeedList } from "@/lib/product-seed";
-import type { Order, OrderStatus, Product } from "@/types/domain";
+import type { Order, OrderStatus, Product, ProductDraft } from "@/types/domain";
 
 const now = new Date();
 
@@ -100,4 +100,56 @@ export function updateMockOrderStatus(orderId: string, nextStatus: OrderStatus) 
   }
 
   return order;
+}
+
+export function createMockProduct(input: ProductDraft) {
+  const product: Product = {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    ...input,
+  };
+
+  mockProducts.unshift(product);
+  return product;
+}
+
+export function updateMockProduct(productId: string, input: ProductDraft) {
+  const product = mockProducts.find((item) => item.id === productId);
+
+  if (!product) {
+    return null;
+  }
+
+  product.title = input.title;
+  product.slug = input.slug;
+  product.price = input.price;
+  product.description = input.description;
+  product.category = input.category;
+  product.imageUrl = input.imageUrl;
+  product.stock = input.stock;
+  product.isActive = input.isActive;
+
+  return product;
+}
+
+export function setMockProductActive(productId: string, isActive: boolean) {
+  const product = mockProducts.find((item) => item.id === productId);
+
+  if (!product) {
+    return null;
+  }
+
+  product.isActive = isActive;
+  return product;
+}
+
+export function deleteMockProduct(productId: string) {
+  const index = mockProducts.findIndex((item) => item.id === productId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const [product] = mockProducts.splice(index, 1);
+  return product ?? null;
 }

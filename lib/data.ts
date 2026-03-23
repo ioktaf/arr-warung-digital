@@ -1,4 +1,12 @@
-import { mockOrders, mockProducts, updateMockOrderStatus } from "@/lib/mock-data";
+import {
+  createMockProduct,
+  deleteMockProduct,
+  mockOrders,
+  mockProducts,
+  setMockProductActive,
+  updateMockOrderStatus,
+  updateMockProduct,
+} from "@/lib/mock-data";
 import { getOrderStatusUpdatePayload } from "@/lib/order-status";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -6,7 +14,8 @@ import {
   hasServiceRoleSupabaseEnv,
 } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { Order, OrderStatus, Product } from "@/types/domain";
+import { slugify } from "@/lib/utils";
+import type { Order, OrderStatus, Product, ProductDraft } from "@/types/domain";
 
 type ProductRow = {
   id: string;
@@ -36,6 +45,14 @@ type OrderRow = {
   cancelled_at: string | null;
   created_at: string;
   product: ProductRow | ProductRow[] | null;
+};
+
+type ProductMutationResult = {
+  ok: boolean;
+  mode: "live" | "mock";
+  message?: string;
+  product?: Product | null;
+  previousSlug?: string | null;
 };
 
 function toNumber(value: number | string) {
@@ -78,6 +95,69 @@ function mapOrder(row: OrderRow): Order {
     createdAt: row.created_at,
     product: relatedProduct ? mapProduct(relatedProduct) : mockProducts[0],
   };
+}
+
+function normalizeProductInput(input: ProductDraft): ProductDraft {
+  const title = input.title.trim();
+  const category = input.category.trim() || "General";
+  const description = input.description.trim();
+  const slugSource = input.slug.trim() || title;
+  const normalizedSlug = slugify(slugSource);
+
+  return {
+    title,
+    slug: normalizedSlug,
+    price: Math.max(0, Math.round(input.price)),
+    description,
+    category,
+    imageUrl: input.imageUrl?.trim() || null,
+    stock: Math.max(0, Math.floor(input.stock)),
+    isActive: input.isActive,
+  };
+}
+
+function toProductRowPayload(input: ProductDraft) {
+  const normalized = normalizeProductInput(input);
+
+  return {
+    title: normalized.title,
+    slug: normalized.slug,
+    price: normalized.price,
+    description: normalized.description,
+    category: normalized.category,
+    image_url: normalized.imageUrl,
+    stock: normalized.stock,
+    is_active: normalized.isActive,
+  };
+}
+
+function getProductErrorMessage(message: string | undefined, fallback: string) {
+  if (!message) {
+    return fallback;
+  }
+
+  if (
+    message.includes("duplicate key") ||
+    message.includes("products_slug_key") ||
+    message.includes("duplicate")
+  ) {
+    return "Slug produk sudah dipakai. Ganti slug dengan nama yang lebih unik.";
+  }
+
+  if (
+    message.includes("orders_product_id_fkey") ||
+    message.includes("violates foreign key constraint")
+  ) {
+    return "Produk yang sudah dipakai di order tidak bisa dihapus.";
+  }
+
+  return fallback;
+}
+
+function hasConflictingMockSlug(slug: string, excludedProductId?: string) {
+  return mockProducts.some(
+    (product) => product.slug === slug && product.id !== excludedProductId,
+  );
 }
 
 async function resolveProofImageUrl(path: string | null) {
@@ -154,6 +234,303 @@ export async function getAdminProducts() {
   }
 
   return (data as ProductRow[]).map(mapProduct);
+}
+
+export async function createProduct(input: ProductDraft): Promise<ProductMutationResult> {
+  const normalized = normalizeProductInput(input);
+
+  if (!normalized.title || !normalized.slug) {
+    return {
+      ok: false,
+      mode: hasServiceRoleSupabaseEnv() ? "live" : "mock",
+      message: "Judul dan slug produk wajib diisi.",
+    };
+  }
+
+  if (!hasServiceRoleSupabaseEnv()) {
+    if (hasConflictingMockSlug(normalized.slug)) {
+      return {
+        ok: false,
+        mode: "mock",
+        message: "Slug produk sudah dipakai. Ganti slug dengan nama yang lebih unik.",
+      };
+    }
+
+    return {
+      ok: true,
+      mode: "mock",
+      product: createMockProduct(normalized),
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  if (!supabase) {
+    if (hasConflictingMockSlug(normalized.slug)) {
+      return {
+        ok: false,
+        mode: "mock",
+        message: "Slug produk sudah dipakai. Ganti slug dengan nama yang lebih unik.",
+      };
+    }
+
+    return {
+      ok: true,
+      mode: "mock",
+      product: createMockProduct(normalized),
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("products")
+    .insert(toProductRowPayload(normalized))
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error("Failed to create product", error?.message);
+    return {
+      ok: false,
+      mode: "live",
+      message: getProductErrorMessage(
+        error?.message,
+        "Produk gagal ditambahkan. Coba lagi sebentar.",
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    mode: "live",
+    product: mapProduct(data as ProductRow),
+  };
+}
+
+export async function updateProduct(
+  productId: string,
+  input: ProductDraft,
+): Promise<ProductMutationResult> {
+  const normalized = normalizeProductInput(input);
+
+  if (!normalized.title || !normalized.slug) {
+    return {
+      ok: false,
+      mode: hasServiceRoleSupabaseEnv() ? "live" : "mock",
+      message: "Judul dan slug produk wajib diisi.",
+    };
+  }
+
+  const existingMockProduct = mockProducts.find((product) => product.id === productId);
+
+  if (!hasServiceRoleSupabaseEnv()) {
+    if (hasConflictingMockSlug(normalized.slug, productId)) {
+      return {
+        ok: false,
+        mode: "mock",
+        previousSlug: existingMockProduct?.slug ?? null,
+        message: "Slug produk sudah dipakai. Ganti slug dengan nama yang lebih unik.",
+      };
+    }
+
+    const product = updateMockProduct(productId, normalized);
+
+    return {
+      ok: Boolean(product),
+      mode: "mock",
+      product,
+      previousSlug: existingMockProduct?.slug ?? null,
+      message: existingMockProduct ? undefined : "Produk tidak ditemukan.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  if (!supabase) {
+    if (hasConflictingMockSlug(normalized.slug, productId)) {
+      return {
+        ok: false,
+        mode: "mock",
+        previousSlug: existingMockProduct?.slug ?? null,
+        message: "Slug produk sudah dipakai. Ganti slug dengan nama yang lebih unik.",
+      };
+    }
+
+    const product = updateMockProduct(productId, normalized);
+
+    return {
+      ok: Boolean(product),
+      mode: "mock",
+      product,
+      previousSlug: existingMockProduct?.slug ?? null,
+      message: existingMockProduct ? undefined : "Produk tidak ditemukan.",
+    };
+  }
+
+  const { data: previousData, error: previousError } = await supabase
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle();
+
+  if (previousError) {
+    console.error("Failed to fetch previous product before update", previousError.message);
+  }
+
+  const { data, error } = await supabase
+    .from("products")
+    .update(toProductRowPayload(normalized))
+    .eq("id", productId)
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error("Failed to update product", error?.message);
+    return {
+      ok: false,
+      mode: "live",
+      previousSlug: previousData?.slug ?? null,
+      message: getProductErrorMessage(
+        error?.message,
+        "Produk gagal diperbarui. Coba lagi sebentar.",
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    mode: "live",
+    product: mapProduct(data as ProductRow),
+    previousSlug: previousData?.slug ?? null,
+  };
+}
+
+export async function setProductActive(
+  productId: string,
+  isActive: boolean,
+): Promise<ProductMutationResult> {
+  const existingMockProduct = mockProducts.find((product) => product.id === productId);
+
+  if (!hasServiceRoleSupabaseEnv()) {
+    const product = setMockProductActive(productId, isActive);
+
+    return {
+      ok: Boolean(product),
+      mode: "mock",
+      product,
+      previousSlug: existingMockProduct?.slug ?? null,
+      message: existingMockProduct ? undefined : "Produk tidak ditemukan.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  if (!supabase) {
+    const product = setMockProductActive(productId, isActive);
+
+    return {
+      ok: Boolean(product),
+      mode: "mock",
+      product,
+      previousSlug: existingMockProduct?.slug ?? null,
+      message: existingMockProduct ? undefined : "Produk tidak ditemukan.",
+    };
+  }
+
+  const { data: previousData, error: previousError } = await supabase
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle();
+
+  if (previousError) {
+    console.error(
+      "Failed to fetch previous product before status update",
+      previousError.message,
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("products")
+    .update({ is_active: isActive })
+    .eq("id", productId)
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error("Failed to toggle product activity", error?.message);
+    return {
+      ok: false,
+      mode: "live",
+      previousSlug: previousData?.slug ?? null,
+      message: "Status produk gagal diubah. Coba lagi sebentar.",
+    };
+  }
+
+  return {
+    ok: true,
+    mode: "live",
+    product: mapProduct(data as ProductRow),
+    previousSlug: previousData?.slug ?? null,
+  };
+}
+
+export async function deleteProduct(productId: string): Promise<ProductMutationResult> {
+  const existingMockProduct = mockProducts.find((product) => product.id === productId);
+
+  if (!hasServiceRoleSupabaseEnv()) {
+    const product = deleteMockProduct(productId);
+
+    return {
+      ok: Boolean(product),
+      mode: "mock",
+      previousSlug: existingMockProduct?.slug ?? null,
+      message: existingMockProduct ? undefined : "Produk tidak ditemukan.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  if (!supabase) {
+    const product = deleteMockProduct(productId);
+
+    return {
+      ok: Boolean(product),
+      mode: "mock",
+      previousSlug: existingMockProduct?.slug ?? null,
+      message: existingMockProduct ? undefined : "Produk tidak ditemukan.",
+    };
+  }
+
+  const { data: previousData, error: previousError } = await supabase
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle();
+
+  if (previousError) {
+    console.error("Failed to fetch previous product before delete", previousError.message);
+  }
+
+  const { error } = await supabase.from("products").delete().eq("id", productId);
+
+  if (error) {
+    console.error("Failed to delete product", error.message);
+    return {
+      ok: false,
+      mode: "live",
+      previousSlug: previousData?.slug ?? null,
+      message: getProductErrorMessage(
+        error.message,
+        "Produk gagal dihapus. Coba lagi sebentar.",
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    mode: "live",
+    previousSlug: previousData?.slug ?? null,
+  };
 }
 
 export async function getProductBySlug(slug: string) {

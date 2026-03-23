@@ -4,23 +4,37 @@ import { ProductTable } from "@/components/admin/product-table";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getAdminProducts } from "@/lib/data";
+import { getFirstValue } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminProductsPage() {
+type AdminProductsPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AdminProductsPage({
+  searchParams,
+}: AdminProductsPageProps) {
+  const query = await searchParams;
   const products = await getAdminProducts();
   const activeCount = products.filter((product) => product.isActive).length;
   const lowStockCount = products.filter((product) => product.stock <= 10).length;
+  const notice = getFirstValue(query.notice);
+  const toneValue = getFirstValue(query.tone);
+  const noticeTone =
+    toneValue === "success" || toneValue === "danger" || toneValue === "accent"
+      ? toneValue
+      : undefined;
 
   return (
     <div className="space-y-8">
       <section>
         <Badge tone="brand">Product Management</Badge>
-        <h2 className="mt-3 text-4xl font-black">Inventory Snapshot</h2>
+        <h2 className="mt-3 text-4xl font-black">Product Control Panel</h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-          Halaman ini jadi fondasi buat CRUD produk. Sekarang fokusnya masih
-          list dan audit ringan: lihat produk aktif, harga, slug, dan stok yang
-          mulai tipis.
+          Sekarang halaman admin produk sudah bisa dipakai langsung buat
+          tambah, edit, aktif/nonaktifkan, dan hapus produk tanpa buka Supabase
+          lagi untuk perubahan rutin.
         </p>
       </section>
 
@@ -59,7 +73,11 @@ export default async function AdminProductsPage() {
         </Card>
       </section>
 
-      <ProductTable products={products} />
+      <ProductTable
+        products={products}
+        notice={notice}
+        noticeTone={noticeTone}
+      />
     </div>
   );
 }

@@ -5,8 +5,9 @@ Storefront produk digital dengan guest checkout, QRIS, upload bukti bayar, dan d
 ## Yang Sudah Siap
 
 - Storefront publik dengan katalog produk dan alur semi-auto.
-- Halaman checkout per produk dengan form buyer, QRIS placeholder, dan konfirmasi bayar.
-- Dashboard admin untuk melihat order dan inventory snapshot.
+- Halaman checkout per produk dengan QRIS asli dari payload merchant dan konfirmasi bayar.
+- Dashboard admin untuk melihat order dan kelola produk langsung dari website.
+- Password gate sederhana untuk mengunci area admin.
 - Fallback mock data kalau env Supabase belum diisi.
 - Schema SQL Supabase di `supabase/schema.sql`.
 - Seed produk sesuai price list di `supabase/seed-products.sql`.
@@ -31,6 +32,8 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_SITE_URL`
+- `ADMIN_ACCESS_PASSWORD`
+- `ADMIN_SESSION_SECRET`
 
 4. Jalankan isi file `supabase/schema.sql` di Supabase SQL Editor.
 
@@ -47,6 +50,7 @@ npm run dev
 - `/` storefront
 - `/checkout/[slug]` checkout produk
 - `/admin` dashboard order admin
+- `/admin/login` login admin
 - `/admin/products` dashboard produk admin
 
 ## Verifikasi
