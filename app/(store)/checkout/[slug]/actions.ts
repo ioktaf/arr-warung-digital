@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getProductBySlug } from "@/lib/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
+import { normalizeWhatsappNumber } from "@/lib/utils";
 
 function getTextValue(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -19,7 +20,7 @@ function buildCheckoutUrl(slug: string, searchParams: URLSearchParams) {
 export async function beginCheckoutAction(formData: FormData) {
   const slug = getTextValue(formData.get("slug"));
   const buyerName = getTextValue(formData.get("buyerName"));
-  const buyerWa = getTextValue(formData.get("buyerWa"));
+  const buyerWa = normalizeWhatsappNumber(getTextValue(formData.get("buyerWa")));
 
   if (!slug) {
     redirect("/");
@@ -35,7 +36,7 @@ export async function beginCheckoutAction(formData: FormData) {
     searchParams.set("buyerWa", buyerWa);
   }
 
-  if (buyerName.length < 2 || buyerWa.replace(/\D/g, "").length < 8) {
+  if (buyerName.length < 2 || buyerWa.length < 10) {
     searchParams.set("error", "Isi nama dan nomor WhatsApp yang valid dulu.");
     redirect(buildCheckoutUrl(slug, searchParams));
   }
@@ -88,7 +89,7 @@ export async function confirmPaymentAction(formData: FormData) {
   const slug = getTextValue(formData.get("slug"));
   const orderId = getTextValue(formData.get("orderId"));
   const buyerName = getTextValue(formData.get("buyerName"));
-  const buyerWa = getTextValue(formData.get("buyerWa"));
+  const buyerWa = normalizeWhatsappNumber(getTextValue(formData.get("buyerWa")));
   const paymentNote = getTextValue(formData.get("paymentNote"));
   const proofFile = formData.get("proofFile");
 

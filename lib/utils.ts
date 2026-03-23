@@ -15,9 +15,40 @@ export function getFirstValue(
   return value;
 }
 
+export function normalizeWhatsappNumber(phone: string) {
+  const digits = phone.trim().replace(/\D/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.startsWith("620")) {
+    return `62${digits.slice(3)}`;
+  }
+
+  if (digits.startsWith("62")) {
+    return digits;
+  }
+
+  if (digits.startsWith("0")) {
+    return `62${digits.slice(1)}`;
+  }
+
+  if (digits.startsWith("8")) {
+    return `62${digits}`;
+  }
+
+  return digits;
+}
+
+export function formatWhatsappDisplay(phone: string) {
+  const normalized = normalizeWhatsappNumber(phone);
+  return normalized ? `+${normalized}` : "";
+}
+
 export function formatWhatsappHref(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  return `https://wa.me/${digits}`;
+  const normalized = normalizeWhatsappNumber(phone);
+  return `https://wa.me/${normalized}`;
 }
 
 export function slugify(value: string) {

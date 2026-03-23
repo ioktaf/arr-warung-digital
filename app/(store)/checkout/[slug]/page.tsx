@@ -21,7 +21,11 @@ import {
 } from "@/lib/format";
 import { getQrisImageDataUrl, paymentConfig } from "@/lib/payment";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
-import { getFirstValue } from "@/lib/utils";
+import {
+  formatWhatsappDisplay,
+  getFirstValue,
+  normalizeWhatsappNumber,
+} from "@/lib/utils";
 import type { OrderStatus } from "@/types/domain";
 
 import { beginCheckoutAction, confirmPaymentAction } from "./actions";
@@ -80,7 +84,10 @@ export default async function CheckoutPage({
   const orderId = getFirstValue(query.order);
   const order = orderId ? await getCheckoutOrder(orderId) : null;
   const buyerName = order?.buyerName ?? getFirstValue(query.buyerName) ?? "";
-  const buyerWa = order?.buyerWa ?? getFirstValue(query.buyerWa) ?? "";
+  const rawBuyerWa = order?.buyerWa ?? getFirstValue(query.buyerWa) ?? "";
+  const normalizedBuyerWa = normalizeWhatsappNumber(rawBuyerWa);
+  const buyerWaInputValue = normalizedBuyerWa ? `+${normalizedBuyerWa}` : "+62";
+  const buyerWaDisplayValue = formatWhatsappDisplay(rawBuyerWa);
   const error = getFirstValue(query.error);
   const success = getFirstValue(query.success);
   const step = getFirstValue(query.step);
@@ -89,7 +96,7 @@ export default async function CheckoutPage({
   const status: OrderStatus =
     order?.status ?? (step === "awaiting-verification" ? "awaiting_verification" : "pending");
   const statusMeta = getOrderStatusMeta(status);
-  const buyerReady = Boolean(buyerName && buyerWa);
+  const buyerReady = Boolean(buyerName && normalizedBuyerWa);
   const progress = progressLabels[status];
 
   return (
@@ -192,8 +199,8 @@ export default async function CheckoutPage({
                   WhatsApp
                   <input
                     name="buyerWa"
-                    placeholder="08xxxxxxxxxx"
-                    defaultValue={buyerWa}
+                    placeholder="+628xxxxxxxxxx"
+                    defaultValue={buyerWaInputValue}
                     className="rounded-2xl border border-line bg-white/70 px-4 py-3 outline-none transition focus:border-brand"
                   />
                 </label>
@@ -225,7 +232,7 @@ export default async function CheckoutPage({
                 </div>
                 <div>
                   <p className="text-sm text-muted">WhatsApp</p>
-                  <p className="mt-2 font-semibold">{buyerWa}</p>
+                  <p className="mt-2 font-semibold">{buyerWaDisplayValue}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted">Order Ref</p>
@@ -357,7 +364,7 @@ export default async function CheckoutPage({
                   <input
                     type="hidden"
                     name="buyerWa"
-                    value={buyerWa}
+                    value={buyerWaDisplayValue}
                   />
 
                   <label className="grid gap-2 text-sm font-medium">

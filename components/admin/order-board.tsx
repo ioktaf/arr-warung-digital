@@ -9,7 +9,7 @@ import {
   formatDateTime,
   getOrderStatusMeta,
 } from "@/lib/format";
-import { formatWhatsappHref } from "@/lib/utils";
+import { formatWhatsappDisplay, formatWhatsappHref } from "@/lib/utils";
 import type { Order, OrderStatus } from "@/types/domain";
 
 const nextActionByStatus: Record<OrderStatus, string> = {
@@ -54,7 +54,7 @@ export function OrderBoard({ orders }: OrderBoardProps) {
                 </p>
                 <h3 className="text-2xl font-bold">{order.product.title}</h3>
                 <p className="text-sm leading-7 text-muted">
-                  Buyer {order.buyerName} - {order.buyerWa}
+                  Buyer {order.buyerName} - {formatWhatsappDisplay(order.buyerWa)}
                 </p>
               </div>
 
