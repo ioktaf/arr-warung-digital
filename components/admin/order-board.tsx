@@ -42,7 +42,13 @@ export function OrderBoard({ orders }: OrderBoardProps) {
     <div className="space-y-4">
       {orders.map((order) => {
         const statusMeta = getOrderStatusMeta(order.status);
-        const basePrice = Math.max(order.totalPrice - order.uniqueCode, 0);
+        const basePrice = order.subtotalPrice;
+        const orderTitle =
+          order.items.length > 1
+            ? `Keranjang ${order.items.length} item`
+            : order.totalQuantity > 1
+              ? `${order.product.title} (${order.totalQuantity} seat)`
+              : order.product.title;
 
         return (
           <Card
@@ -54,15 +60,24 @@ export function OrderBoard({ orders }: OrderBoardProps) {
                 <p className="text-xs uppercase tracking-[0.22em] text-muted">
                   Order #{order.id.slice(0, 8)}
                 </p>
-                <h3 className="text-2xl font-bold">{order.product.title}</h3>
+                <h3 className="text-2xl font-bold">{orderTitle}</h3>
                 <p className="text-sm leading-7 text-muted">
                   Buyer {order.buyerName} - {formatWhatsappDisplay(order.buyerWa)}
                 </p>
                 {order.uniqueCode > 0 ? (
                   <p className="text-sm leading-7 text-muted">
-                    Harga dasar {formatCurrency(basePrice)} + kode unik{" "}
+                    Subtotal {formatCurrency(basePrice)} + kode unik{" "}
                     {formatUniqueCode(order.uniqueCode)}
                   </p>
+                ) : null}
+                {order.items.length ? (
+                  <div className="space-y-1 text-sm leading-7 text-muted">
+                    {order.items.map((item) => (
+                      <p key={item.id}>
+                        {item.quantity}x {item.product.title}
+                      </p>
+                    ))}
+                  </div>
                 ) : null}
               </div>
 
@@ -91,6 +106,13 @@ export function OrderBoard({ orders }: OrderBoardProps) {
                 </p>
                 <p className="mt-1 text-sm leading-7 text-muted">
                   {formatDateTime(order.paymentConfirmedAt)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-foreground">Total Seat</p>
+                <p className="mt-1 text-sm leading-7 text-muted">
+                  {order.totalQuantity} seat
                 </p>
               </div>
 

@@ -29,12 +29,38 @@ function getMockProduct(slug: string) {
   return mockProducts.find((product) => product.slug === slug) ?? mockProducts[0];
 }
 
+function createMockOrderItems(orderId: string, productSlug: string, quantity: number) {
+  const product = getMockProduct(productSlug);
+  const safeQuantity = Math.max(1, Math.floor(quantity));
+  const subtotalPrice = product.price * safeQuantity;
+
+  return {
+    subtotalPrice,
+    totalQuantity: safeQuantity,
+    items: [
+      {
+        id: `${orderId}-item-1`,
+        quantity: safeQuantity,
+        unitPrice: product.price,
+        subtotalPrice,
+        product,
+      },
+    ],
+    product,
+  };
+}
+
 export const mockOrders: Order[] = [
   {
     id: "d9b6ceba-1f4e-4f24-a1b1-9216a8613386",
     buyerName: "Budi",
     buyerWa: "081234567890",
     uniqueCode: 123,
+    ...createMockOrderItems(
+      "d9b6ceba-1f4e-4f24-a1b1-9216a8613386",
+      "canva-pro-1-bulan",
+      1,
+    ),
     totalPrice: 15123,
     status: "awaiting_verification",
     proofImgUrl: null,
@@ -45,14 +71,18 @@ export const mockOrders: Order[] = [
     completedAt: null,
     cancelledAt: null,
     createdAt: new Date(now.getTime() - 1000 * 60 * 16).toISOString(),
-    product: getMockProduct("canva-pro-1-bulan"),
   },
   {
     id: "a0cf5826-97d1-40f0-a7f6-fca9c0540c8b",
     buyerName: "Sari",
     buyerWa: "089500001122",
     uniqueCode: 214,
-    totalPrice: 35214,
+    ...createMockOrderItems(
+      "a0cf5826-97d1-40f0-a7f6-fca9c0540c8b",
+      "netflix-premium-1-profil",
+      1,
+    ),
+    totalPrice: 59214,
     status: "paid",
     proofImgUrl: null,
     paymentNote: "QRIS BCA",
@@ -62,14 +92,18 @@ export const mockOrders: Order[] = [
     completedAt: null,
     cancelledAt: null,
     createdAt: new Date(now.getTime() - 1000 * 60 * 48).toISOString(),
-    product: getMockProduct("netflix-premium-1-profil"),
   },
   {
     id: "f26857d2-1f50-4b70-b670-2771b6d1721d",
     buyerName: "Rizky",
     buyerWa: "087700112233",
     uniqueCode: 87,
-    totalPrice: 89087,
+    ...createMockOrderItems(
+      "f26857d2-1f50-4b70-b670-2771b6d1721d",
+      "chatgpt-business-1-bulan-team-invite",
+      1,
+    ),
+    totalPrice: 59087,
     status: "pending",
     proofImgUrl: null,
     paymentNote: null,
@@ -79,7 +113,6 @@ export const mockOrders: Order[] = [
     completedAt: null,
     cancelledAt: null,
     createdAt: new Date(now.getTime() - 1000 * 60 * 5).toISOString(),
-    product: getMockProduct("chatgpt-business-1-bulan-team-invite"),
   },
 ];
 

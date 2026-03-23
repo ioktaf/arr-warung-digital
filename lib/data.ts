@@ -24,6 +24,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
 import type {
   Order,
+  OrderItem,
   OrderStatus,
   Product,
   ProductDraft,
@@ -60,6 +61,15 @@ type OrderRow = {
   completed_at: string | null;
   cancelled_at: string | null;
   created_at: string;
+  product: ProductRow | ProductRow[] | null;
+  items?: OrderItemRow[] | null;
+};
+
+type OrderItemRow = {
+  id: string;
+  quantity: number;
+  unit_price: number | string;
+  subtotal_price: number | string;
   product: ProductRow | ProductRow[] | null;
 };
 
@@ -164,14 +174,39 @@ function mapOrder(row: OrderRow): Order {
   const relatedProduct = Array.isArray(row.product)
     ? row.product[0] ?? null
     : row.product;
+  const fallbackProduct = relatedProduct ? mapProduct(relatedProduct) : mockProducts[0];
+  const relatedItems = Array.isArray(row.items)
+    ? row.items
+        .map((item) => mapOrderItem(item))
+        .filter((item): item is OrderItem => item !== null)
+    : [];
+  const uniqueCode =
+    typeof row.unique_code === "number" ? Math.max(0, row.unique_code) : 0;
+  const subtotalPrice =
+    relatedItems.reduce((sum, item) => sum + item.subtotalPrice, 0) ||
+    Math.max(toNumber(row.total_price) - uniqueCode, 0);
+  const items =
+    relatedItems.length > 0
+      ? relatedItems
+      : [
+          {
+            id: `legacy-${row.id}`,
+            quantity: 1,
+            unitPrice: subtotalPrice,
+            subtotalPrice,
+            product: fallbackProduct,
+          },
+        ];
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return {
     id: row.id,
     buyerName: row.buyer_name,
     buyerWa: row.buyer_wa,
-    uniqueCode:
-      typeof row.unique_code === "number" ? Math.max(0, row.unique_code) : 0,
+    uniqueCode,
+    subtotalPrice,
     totalPrice: toNumber(row.total_price),
+    totalQuantity,
     status: row.status,
     proofImgUrl: row.proof_img_url,
     paymentNote: row.payment_note,
@@ -181,7 +216,26 @@ function mapOrder(row: OrderRow): Order {
     completedAt: row.completed_at,
     cancelledAt: row.cancelled_at,
     createdAt: row.created_at,
-    product: relatedProduct ? mapProduct(relatedProduct) : mockProducts[0],
+    items,
+    product: items[0]?.product ?? fallbackProduct,
+  };
+}
+
+function mapOrderItem(row: OrderItemRow): OrderItem | null {
+  const relatedProduct = Array.isArray(row.product)
+    ? row.product[0] ?? null
+    : row.product;
+
+  if (!relatedProduct) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    quantity: Math.max(1, Math.floor(row.quantity)),
+    unitPrice: toNumber(row.unit_price),
+    subtotalPrice: toNumber(row.subtotal_price),
+    product: mapProduct(relatedProduct),
   };
 }
 
@@ -436,6 +490,7 @@ function getProductErrorMessage(message: string | undefined, fallback: string) {
 
   if (
     message.includes("orders_product_id_fkey") ||
+    message.includes("order_items_product_id_fkey") ||
     message.includes("violates foreign key constraint")
   ) {
     return "Produk yang sudah dipakai di order tidak bisa dihapus.";
@@ -633,6 +688,57 @@ export async function getCatalogProducts() {
   }
 
   return (data as ProductRow[]).map(mapProduct);
+}
+
+export async function getProductsByIds(productIds: string[]) {
+  const normalizedIds = Array.from(new Set(productIds.filter(Boolean)));
+
+  if (!normalizedIds.length) {
+    return [];
+  }
+
+  if (!hasPublicSupabaseEnv()) {
+    return normalizedIds.flatMap((productId) => {
+      const product = mockProducts.find(
+        (item) => item.id === productId && item.isActive,
+      );
+      return product ? [product] : [];
+    });
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return normalizedIds.flatMap((productId) => {
+      const product = mockProducts.find(
+        (item) => item.id === productId && item.isActive,
+      );
+      return product ? [product] : [];
+    });
+  }
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .in("id", normalizedIds)
+    .eq("is_active", true);
+
+  if (error || !data) {
+    console.error("Failed to fetch products by ids", error?.message);
+    return normalizedIds.flatMap((productId) => {
+      const product = mockProducts.find(
+        (item) => item.id === productId && item.isActive,
+      );
+      return product ? [product] : [];
+    });
+  }
+
+  const productMap = new Map((data as ProductRow[]).map((row) => [row.id, mapProduct(row)]));
+
+  return normalizedIds.flatMap((productId) => {
+    const product = productMap.get(productId);
+    return product ? [product] : [];
+  });
 }
 
 export async function getAdminProducts() {
@@ -999,7 +1105,7 @@ export async function getCheckoutOrder(orderId: string) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, buyer_name, buyer_wa, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*)",
+      "id, buyer_name, buyer_wa, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*), items:order_items(id, quantity, unit_price, subtotal_price, product:products!order_items_product_id_fkey(*))",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -1028,7 +1134,7 @@ export async function getAdminOrders() {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, buyer_name, buyer_wa, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*)",
+      "id, buyer_name, buyer_wa, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*), items:order_items(id, quantity, unit_price, subtotal_price, product:products!order_items_product_id_fkey(*))",
     )
     .order("created_at", { ascending: false });
 

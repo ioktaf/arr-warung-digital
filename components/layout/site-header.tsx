@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { SiteBrand } from "@/components/layout/site-brand";
+import { CartLink } from "@/components/store/cart-link";
 import { Badge } from "@/components/ui/badge";
 import type { StoreSettings } from "@/types/domain";
 
@@ -30,18 +31,22 @@ export function SiteHeader({ settings }: SiteHeaderProps) {
           />
         </Link>
 
-        <nav className="hidden items-center gap-3 md:flex">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-full px-4 py-2 text-sm font-medium text-muted transition hover:bg-white/60 hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <Badge tone="accent">{settings.headerStatusBadge}</Badge>
-        </nav>
+        <div className="flex items-center gap-3">
+          <nav className="hidden items-center gap-3 md:flex">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-full px-4 py-2 text-sm font-medium text-muted transition hover:bg-white/60 hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Badge tone="accent">{settings.headerStatusBadge}</Badge>
+          </nav>
+
+          <CartLink />
+        </div>
       </div>
     </header>
   );

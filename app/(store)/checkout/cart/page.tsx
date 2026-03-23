@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import {
   ArrowLeft,
   CheckCircle2,
   Clock3,
   ShieldCheck,
+  ShoppingBag,
   Upload,
   WalletCards,
 } from "lucide-react";
@@ -13,13 +14,15 @@ import {
 import { SubmitButton } from "@/components/submit-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { getCheckoutOrder, getProductBySlug, getStoreSettings } from "@/lib/data";
+import { parseCartItemsPayload, serializeCartItemsPayload } from "@/lib/cart";
+import { getCheckoutOrder, getProductsByIds, getStoreSettings } from "@/lib/data";
 import {
   formatCurrency,
   formatDateTime,
   formatUniqueCode,
   getOrderStatusMeta,
 } from "@/lib/format";
+import { clampCheckoutQuantity } from "@/lib/order-checkout";
 import { getQrisImageDataUrl } from "@/lib/payment";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
 import {
@@ -27,14 +30,18 @@ import {
   getFirstValue,
   normalizeWhatsappNumber,
 } from "@/lib/utils";
-import { clampCheckoutQuantity } from "@/lib/order-checkout";
-import type { OrderStatus } from "@/types/domain";
+import type { OrderStatus, Product } from "@/types/domain";
 
-import { beginCheckoutAction, confirmPaymentAction } from "./actions";
+import { beginCartCheckoutAction, confirmCartPaymentAction } from "./actions";
 
-type CheckoutPageProps = {
-  params: Promise<{ slug: string }>;
+type CartCheckoutPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+type CartCheckoutLine = {
+  product: Product;
+  quantity: number;
+  subtotalPrice: number;
 };
 
 const progressLabels: Record<OrderStatus, string[]> = {
@@ -70,28 +77,40 @@ const progressLabels: Record<OrderStatus, string[]> = {
   ],
 };
 
-export default async function CheckoutPage({
-  params,
+function getDraftCartLines(products: Product[], cartPayload: string) {
+  const cartLines = parseCartItemsPayload(cartPayload);
+  const productMap = new Map(products.map((product) => [product.id, product]));
+
+  return cartLines.flatMap((line) => {
+    const product = productMap.get(line.productId);
+
+    if (!product) {
+      return [];
+    }
+
+    const quantity = clampCheckoutQuantity(line.quantity, product.stock);
+
+    return [
+      {
+        product,
+        quantity,
+        subtotalPrice: product.price * quantity,
+      },
+    ];
+  });
+}
+
+export default async function CartCheckoutPage({
   searchParams,
-}: CheckoutPageProps) {
-  const { slug } = await params;
+}: CartCheckoutPageProps) {
   const query = await searchParams;
-  const product = await getProductBySlug(slug);
   const settings = await getStoreSettings();
-
-  if (!product) {
-    notFound();
-  }
-
   const orderId = getFirstValue(query.order);
   const order = orderId ? await getCheckoutOrder(orderId) : null;
+  const cartPayloadFromQuery = getFirstValue(query.cart) ?? "";
   const uniqueCodeFromQuery = Number.parseInt(
     getFirstValue(query.uniqueCode) ?? "0",
     10,
-  );
-  const requestedQuantity = clampCheckoutQuantity(
-    Number.parseInt(getFirstValue(query.quantity) ?? "1", 10),
-    product.stock,
   );
   const buyerName = order?.buyerName ?? getFirstValue(query.buyerName) ?? "";
   const rawBuyerWa = order?.buyerWa ?? getFirstValue(query.buyerWa) ?? "";
@@ -103,36 +122,63 @@ export default async function CheckoutPage({
   const step = getFirstValue(query.step);
   const demoMode = getFirstValue(query.demo) === "1" || !hasServiceRoleSupabaseEnv();
 
+  const draftProducts = await getProductsByIds(
+    parseCartItemsPayload(cartPayloadFromQuery).map((item) => item.productId),
+  );
+  const draftLines = getDraftCartLines(draftProducts, cartPayloadFromQuery);
+
+  if (!order && !draftLines.length) {
+    redirect("/cart");
+  }
+
+  const displayLines: CartCheckoutLine[] = order
+    ? order.items.map((item) => ({
+        product: item.product,
+        quantity: item.quantity,
+        subtotalPrice: item.subtotalPrice,
+      }))
+    : draftLines;
+  const totalQuantity =
+    order?.totalQuantity ??
+    displayLines.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotalPrice =
+    order?.subtotalPrice ??
+    displayLines.reduce((sum, item) => sum + item.subtotalPrice, 0);
   const status: OrderStatus =
     order?.status ?? (step === "awaiting-verification" ? "awaiting_verification" : "pending");
   const statusMeta = getOrderStatusMeta(status);
   const buyerReady = Boolean(buyerName && normalizedBuyerWa);
   const progress = progressLabels[status];
-  const quantity = order?.totalQuantity ?? requestedQuantity;
   const uniqueCode =
     order?.uniqueCode ??
     (Number.isFinite(uniqueCodeFromQuery) && uniqueCodeFromQuery > 0
       ? uniqueCodeFromQuery
       : 0);
-  const subtotalPrice = order?.subtotalPrice ?? product.price * quantity;
   const transferAmount = buyerReady
     ? order?.totalPrice ?? (subtotalPrice + uniqueCode)
     : subtotalPrice;
-  const basePrice = subtotalPrice;
   const qrisImageDataUrl = await getQrisImageDataUrl(
     settings.paymentQrisPayload,
     buyerReady ? transferAmount : undefined,
   );
+  const cartPayload =
+    cartPayloadFromQuery ||
+    serializeCartItemsPayload(
+      displayLines.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+      })),
+    );
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <Link
-          href="/"
+          href="/cart"
           className="inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Kembali ke katalog
+          Kembali ke keranjang
         </Link>
         <Badge tone={demoMode ? "accent" : "brand"}>
           {demoMode ? "Demo Checkout" : "Live Checkout"}
@@ -145,11 +191,12 @@ export default async function CheckoutPage({
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-sm uppercase tracking-[0.22em] text-muted">
-                  {settings.checkoutEyebrow}
+                  Checkout Keranjang
                 </p>
-                <h1 className="mt-2 text-4xl font-black">{product.title}</h1>
+                <h1 className="mt-2 text-4xl font-black">Gabungkan beberapa produk sekaligus</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-                  {settings.checkoutIntroDescription}
+                  Semua item di bawah akan masuk ke satu order, satu QRIS, dan satu
+                  total transfer akhir yang sudah termasuk kode unik.
                 </p>
               </div>
               <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
@@ -157,25 +204,53 @@ export default async function CheckoutPage({
 
             <div className="grid gap-4 rounded-[24px] border border-line bg-white/60 p-5 sm:grid-cols-4">
               <div>
-                <p className="text-sm text-muted">Harga / slot</p>
-                <p className="mt-2 text-2xl font-black">
-                  {formatCurrency(product.price)}
-                </p>
+                <p className="text-sm text-muted">Baris produk</p>
+                <p className="mt-2 text-2xl font-black">{displayLines.length} item</p>
               </div>
               <div>
-                <p className="text-sm text-muted">Seat Dipilih</p>
-                <p className="mt-2 text-lg font-semibold">{quantity} seat</p>
+                <p className="text-sm text-muted">Total seat</p>
+                <p className="mt-2 text-lg font-semibold">{totalQuantity} seat</p>
               </div>
               <div>
                 <p className="text-sm text-muted">Subtotal</p>
-                <p className="mt-2 text-lg font-semibold">
-                  {formatCurrency(subtotalPrice)}
-                </p>
+                <p className="mt-2 text-lg font-semibold">{formatCurrency(subtotalPrice)}</p>
               </div>
               <div>
-                <p className="text-sm text-muted">Kategori</p>
-                <p className="mt-2 text-lg font-semibold">{product.category}</p>
+                <p className="text-sm text-muted">Status</p>
+                <p className="mt-2 text-lg font-semibold">{statusMeta.label}</p>
               </div>
+            </div>
+          </Card>
+
+          <Card className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-brand/10 p-3 text-brand">
+                <ShoppingBag className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Ringkasan Item Checkout</h2>
+                <p className="text-sm leading-7 text-muted">
+                  Jumlah seat per item tetap dihitung satu per satu sebelum
+                  digabung ke total transfer.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {displayLines.map((item) => (
+                <div
+                  key={`${item.product.id}-${item.quantity}`}
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-[22px] border border-line bg-white/60 p-4"
+                >
+                  <div>
+                    <p className="font-semibold text-foreground">{item.product.title}</p>
+                    <p className="mt-1 text-sm leading-7 text-muted">
+                      {item.quantity} seat x {formatCurrency(item.product.price)}
+                    </p>
+                  </div>
+                  <p className="text-lg font-bold">{formatCurrency(item.subtotalPrice)}</p>
+                </div>
+              ))}
             </div>
           </Card>
 
@@ -206,13 +281,13 @@ export default async function CheckoutPage({
               </div>
 
               <form
-                action={beginCheckoutAction}
+                action={beginCartCheckoutAction}
                 className="grid gap-4"
               >
                 <input
                   type="hidden"
-                  name="slug"
-                  value={product.slug}
+                  name="cartPayload"
+                  value={cartPayload}
                 />
                 <label className="grid gap-2 text-sm font-medium">
                   Nama Buyer
@@ -229,17 +304,6 @@ export default async function CheckoutPage({
                     name="buyerWa"
                     placeholder="+628xxxxxxxxxx"
                     defaultValue={buyerWaInputValue}
-                    className="rounded-2xl border border-line bg-white/70 px-4 py-3 outline-none transition focus:border-brand"
-                  />
-                </label>
-                <label className="grid gap-2 text-sm font-medium">
-                  Jumlah seat
-                  <input
-                    type="number"
-                    min={product.stock > 0 ? 1 : 0}
-                    max={product.stock}
-                    name="quantity"
-                    defaultValue={quantity}
                     className="rounded-2xl border border-line bg-white/70 px-4 py-3 outline-none transition focus:border-brand"
                   />
                 </label>
@@ -280,14 +344,8 @@ export default async function CheckoutPage({
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted">Seat</p>
-                  <p className="mt-2 font-semibold">{quantity} seat</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted">Dibuat</p>
-                  <p className="mt-2 font-semibold">
-                    {order ? formatDateTime(order.createdAt) : "Baru saja"}
-                  </p>
+                  <p className="text-sm text-muted">Total seat</p>
+                  <p className="mt-2 font-semibold">{totalQuantity} seat</p>
                 </div>
               </div>
             </Card>
@@ -301,9 +359,7 @@ export default async function CheckoutPage({
                     <Clock3 className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold">
-                      {settings.paymentCheckoutTitle}
-                    </h2>
+                    <h2 className="text-2xl font-bold">{settings.paymentCheckoutTitle}</h2>
                     <p className="text-sm leading-7 text-muted">
                       {settings.paymentCheckoutDescription}
                     </p>
@@ -348,23 +404,15 @@ export default async function CheckoutPage({
                       <p className="mt-2 text-3xl font-black">
                         {formatCurrency(transferAmount)}
                       </p>
-                      {uniqueCode > 0 ? (
-                        <div className="mt-3 space-y-2 text-sm leading-7 text-muted">
-                          <p>Subtotal seat: {formatCurrency(basePrice)}</p>
-                          <p>Seat dipilih: {quantity} seat</p>
-                          <p>Kode unik: {formatUniqueCode(uniqueCode)}</p>
-                          <p>
-                            Base QRIS merchant {settings.paymentMerchantName} tetap sama,
-                            tapi nominal di QR mengikuti total akhir di atas.
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="mt-3 text-sm leading-7 text-muted">
-                          Base QRIS merchant {settings.paymentMerchantName} tetap sama.
-                          Buyer cukup scan QR, lalu transfer sesuai nominal yang tampil
-                          di halaman ini.
+                      <div className="mt-3 space-y-2 text-sm leading-7 text-muted">
+                        <p>Subtotal keranjang: {formatCurrency(subtotalPrice)}</p>
+                        <p>Total seat: {totalQuantity} seat</p>
+                        <p>Kode unik: {uniqueCode > 0 ? formatUniqueCode(uniqueCode) : "-"}</p>
+                        <p>
+                          QRIS merchant tetap satu, tapi nominal QR mengikuti total
+                          gabungan seluruh item di atas.
                         </p>
-                      )}
+                      </div>
                     </div>
 
                     <div className="rounded-[24px] border border-line bg-white/60 p-5">
@@ -397,13 +445,13 @@ export default async function CheckoutPage({
                 </div>
 
                 <form
-                  action={confirmPaymentAction}
+                  action={confirmCartPaymentAction}
                   className="grid gap-4"
                 >
                   <input
                     type="hidden"
-                    name="slug"
-                    value={product.slug}
+                    name="cartPayload"
+                    value={cartPayload}
                   />
                   <input
                     type="hidden"
@@ -419,11 +467,6 @@ export default async function CheckoutPage({
                     type="hidden"
                     name="buyerWa"
                     value={buyerWaDisplayValue}
-                  />
-                  <input
-                    type="hidden"
-                    name="quantity"
-                    value={String(quantity)}
                   />
                   <input
                     type="hidden"
@@ -495,10 +538,10 @@ export default async function CheckoutPage({
                         {index === 0
                           ? "Nama dan WhatsApp buyer sudah tercatat."
                           : index === 1
-                            ? "Buyer tinggal scan QRIS dan transfer nominal."
+                            ? "Buyer tinggal scan QRIS dan transfer total keranjang."
                             : index === 2
-                              ? "Admin cocokkan mutasi dengan order ini."
-                              : "Status akhir setelah akun berhasil dikirim."}
+                              ? "Admin cocokkan mutasi dengan total transfer dan kode unik."
+                              : "Status akhir setelah seluruh akses berhasil dikirim."}
                       </p>
                     </div>
                   </div>
@@ -532,7 +575,7 @@ export default async function CheckoutPage({
               <h2 className="text-2xl font-bold">{settings.orderSnapshotTitle}</h2>
               <div className="grid gap-4 rounded-[24px] border border-line bg-white/60 p-5">
                 <div>
-                  <p className="text-sm text-muted">Subtotal Seat</p>
+                  <p className="text-sm text-muted">Subtotal Keranjang</p>
                   <p className="mt-1 font-semibold">{formatCurrency(order.subtotalPrice)}</p>
                 </div>
                 <div>
@@ -555,15 +598,7 @@ export default async function CheckoutPage({
                 </div>
                 <div>
                   <p className="text-sm text-muted">Created At</p>
-                  <p className="mt-1 font-semibold">
-                    {formatDateTime(order.createdAt)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted">Proof Image</p>
-                  <p className="mt-1 font-semibold">
-                    {order.proofImgUrl ? "Sudah ada" : "Belum upload"}
-                  </p>
+                  <p className="mt-1 font-semibold">{formatDateTime(order.createdAt)}</p>
                 </div>
               </div>
             </Card>

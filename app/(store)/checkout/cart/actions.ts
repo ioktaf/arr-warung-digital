@@ -3,12 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { getProductBySlug } from "@/lib/data";
-import {
-  clampCheckoutQuantity,
-  createCheckoutOrder,
-  parseUniqueCode,
-} from "@/lib/order-checkout";
+import { parseCartItemsPayload } from "@/lib/cart";
+import { getProductsByIds } from "@/lib/data";
+import { clampCheckoutQuantity, createCheckoutOrder, parseUniqueCode } from "@/lib/order-checkout";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
 import { normalizeWhatsappNumber } from "@/lib/utils";
@@ -17,35 +14,20 @@ function getTextValue(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function buildCheckoutUrl(slug: string, searchParams: URLSearchParams) {
+function buildCartCheckoutUrl(searchParams: URLSearchParams) {
   const query = searchParams.toString();
-  return query ? `/checkout/${slug}?${query}` : `/checkout/${slug}`;
+  return query ? `/checkout/cart?${query}` : "/checkout/cart";
 }
 
-function getRequestedQuantity(value: string, stock: number) {
-  return clampCheckoutQuantity(Number.parseInt(value, 10), stock);
-}
-
-export async function beginCheckoutAction(formData: FormData) {
-  const slug = getTextValue(formData.get("slug"));
+export async function beginCartCheckoutAction(formData: FormData) {
+  const cartPayload = getTextValue(formData.get("cartPayload"));
   const buyerName = getTextValue(formData.get("buyerName"));
   const buyerWa = normalizeWhatsappNumber(getTextValue(formData.get("buyerWa")));
-
-  if (!slug) {
-    redirect("/");
-  }
-
-  const product = await getProductBySlug(slug);
-
-  if (!product) {
-    redirect("/");
-  }
-
-  const quantity = getRequestedQuantity(
-    getTextValue(formData.get("quantity")),
-    product.stock,
-  );
   const searchParams = new URLSearchParams();
+
+  if (cartPayload) {
+    searchParams.set("cart", cartPayload);
+  }
 
   if (buyerName) {
     searchParams.set("buyerName", buyerName);
@@ -55,27 +37,39 @@ export async function beginCheckoutAction(formData: FormData) {
     searchParams.set("buyerWa", buyerWa);
   }
 
-  searchParams.set("quantity", String(quantity));
-
-  if (quantity <= 0) {
-    searchParams.set("error", "Stok produk ini sedang habis.");
-    redirect(buildCheckoutUrl(slug, searchParams));
-  }
-
   if (buyerName.length < 2 || buyerWa.length < 10) {
     searchParams.set("error", "Isi nama dan nomor WhatsApp yang valid dulu.");
-    redirect(buildCheckoutUrl(slug, searchParams));
+    redirect(buildCartCheckoutUrl(searchParams));
   }
 
-  const result = await createCheckoutOrder(
-    [{ product, quantity }],
-    buyerName,
-    buyerWa,
-  );
+  const cartLines = parseCartItemsPayload(cartPayload);
+  const products = await getProductsByIds(cartLines.map((item) => item.productId));
+  const productMap = new Map(products.map((product) => [product.id, product]));
+  const items = cartLines.flatMap((line) => {
+    const product = productMap.get(line.productId);
+
+    if (!product) {
+      return [];
+    }
+
+    return [
+      {
+        product,
+        quantity: clampCheckoutQuantity(line.quantity, product.stock),
+      },
+    ];
+  });
+
+  if (!items.length) {
+    searchParams.set("error", "Keranjang kosong atau ada produk yang sudah tidak aktif.");
+    redirect(buildCartCheckoutUrl(searchParams));
+  }
+
+  const result = await createCheckoutOrder(items, buyerName, buyerWa);
 
   if (!result.ok) {
     searchParams.set("error", result.message);
-    redirect(buildCheckoutUrl(slug, searchParams));
+    redirect(buildCartCheckoutUrl(searchParams));
   }
 
   searchParams.set("uniqueCode", String(result.uniqueCode));
@@ -88,24 +82,22 @@ export async function beginCheckoutAction(formData: FormData) {
     searchParams.set("demo", "1");
   }
 
-  redirect(buildCheckoutUrl(slug, searchParams));
+  redirect(buildCartCheckoutUrl(searchParams));
 }
 
-export async function confirmPaymentAction(formData: FormData) {
-  const slug = getTextValue(formData.get("slug"));
+export async function confirmCartPaymentAction(formData: FormData) {
   const orderId = getTextValue(formData.get("orderId"));
+  const cartPayload = getTextValue(formData.get("cartPayload"));
   const buyerName = getTextValue(formData.get("buyerName"));
   const buyerWa = normalizeWhatsappNumber(getTextValue(formData.get("buyerWa")));
   const uniqueCode = parseUniqueCode(getTextValue(formData.get("uniqueCode")));
   const paymentNote = getTextValue(formData.get("paymentNote"));
   const proofFile = formData.get("proofFile");
-  const quantity = getTextValue(formData.get("quantity"));
-
-  if (!slug) {
-    redirect("/");
-  }
-
   const searchParams = new URLSearchParams();
+
+  if (cartPayload) {
+    searchParams.set("cart", cartPayload);
+  }
 
   if (buyerName) {
     searchParams.set("buyerName", buyerName);
@@ -113,10 +105,6 @@ export async function confirmPaymentAction(formData: FormData) {
 
   if (buyerWa) {
     searchParams.set("buyerWa", buyerWa);
-  }
-
-  if (quantity) {
-    searchParams.set("quantity", quantity);
   }
 
   if (orderId) {
@@ -131,7 +119,7 @@ export async function confirmPaymentAction(formData: FormData) {
     searchParams.set("demo", "1");
     searchParams.set("step", "awaiting-verification");
     searchParams.set("success", "1");
-    redirect(buildCheckoutUrl(slug, searchParams));
+    redirect(buildCartCheckoutUrl(searchParams));
   }
 
   const supabase = createSupabaseAdminClient();
@@ -140,7 +128,7 @@ export async function confirmPaymentAction(formData: FormData) {
     searchParams.set("demo", "1");
     searchParams.set("step", "awaiting-verification");
     searchParams.set("success", "1");
-    redirect(buildCheckoutUrl(slug, searchParams));
+    redirect(buildCartCheckoutUrl(searchParams));
   }
 
   let proofPath: string | null = null;
@@ -163,7 +151,7 @@ export async function confirmPaymentAction(formData: FormData) {
     if (uploadError) {
       console.error("Failed to upload proof file", uploadError.message);
       searchParams.set("error", "Bukti bayar gagal diupload. Coba ulang lagi.");
-      redirect(buildCheckoutUrl(slug, searchParams));
+      redirect(buildCartCheckoutUrl(searchParams));
     }
 
     proofPath = storagePath;
@@ -180,13 +168,13 @@ export async function confirmPaymentAction(formData: FormData) {
     .eq("id", orderId);
 
   if (error) {
-    console.error("Failed to update order confirmation", error.message);
+    console.error("Failed to update cart order confirmation", error.message);
     searchParams.set("error", "Konfirmasi bayar gagal dikirim.");
-    redirect(buildCheckoutUrl(slug, searchParams));
+    redirect(buildCartCheckoutUrl(searchParams));
   }
 
   revalidatePath("/admin");
   searchParams.set("step", "awaiting-verification");
   searchParams.set("success", "1");
-  redirect(buildCheckoutUrl(slug, searchParams));
+  redirect(buildCartCheckoutUrl(searchParams));
 }

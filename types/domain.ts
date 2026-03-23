@@ -24,12 +24,32 @@ export type Product = ProductDraft & {
   createdAt: string;
 };
 
+export type CartItem = {
+  productId: string;
+  slug: string;
+  title: string;
+  category: string;
+  unitPrice: number;
+  stock: number;
+  quantity: number;
+};
+
+export type OrderItem = {
+  id: string;
+  quantity: number;
+  unitPrice: number;
+  subtotalPrice: number;
+  product: Product;
+};
+
 export type Order = {
   id: string;
   buyerName: string;
   buyerWa: string;
   uniqueCode: number;
+  subtotalPrice: number;
   totalPrice: number;
+  totalQuantity: number;
   status: OrderStatus;
   proofImgUrl: string | null;
   paymentNote: string | null;
@@ -39,6 +59,7 @@ export type Order = {
   completedAt: string | null;
   cancelledAt: string | null;
   createdAt: string;
+  items: OrderItem[];
   product: Product;
 };
 

@@ -47,7 +47,7 @@ create table if not exists public.orders (
   product_id uuid not null references public.products(id) on delete restrict,
   buyer_name text not null,
   buyer_wa text not null,
-  unique_code integer not null default 0 check (unique_code >= 0 and unique_code <= 999),
+  unique_code integer not null default 0 check (unique_code >= 0 and unique_code <= 299),
   total_price numeric(12, 2) not null check (total_price >= 0),
   status public.order_status not null default 'pending',
   proof_img_url text,
@@ -59,6 +59,16 @@ create table if not exists public.orders (
   cancelled_at timestamptz,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  product_id uuid not null references public.products(id) on delete restrict,
+  quantity integer not null check (quantity > 0),
+  unit_price numeric(12, 2) not null check (unit_price >= 0),
+  subtotal_price numeric(12, 2) not null check (subtotal_price >= 0),
+  created_at timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public.store_settings (
@@ -127,6 +137,36 @@ create table if not exists public.store_settings (
 
 alter table public.orders
 add column if not exists unique_code integer not null default 0;
+
+do $$
+declare
+  constraint_name text;
+begin
+  for constraint_name in
+    select conname
+    from pg_constraint
+    where conrelid = 'public.orders'::regclass
+      and contype = 'c'
+      and pg_get_constraintdef(oid) ilike '%unique_code%'
+  loop
+    execute format(
+      'alter table public.orders drop constraint if exists %I',
+      constraint_name
+    );
+  end loop;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.orders'::regclass
+      and conname = 'orders_unique_code_range'
+  ) then
+    alter table public.orders
+    add constraint orders_unique_code_range
+    check (unique_code >= 0 and unique_code <= 299);
+  end if;
+end
+$$;
 
 alter table public.store_settings
 add column if not exists brand_logo_url text;
@@ -236,6 +276,8 @@ create index if not exists idx_orders_product_id on public.orders(product_id);
 create index if not exists idx_orders_status on public.orders(status);
 create index if not exists idx_orders_created_at on public.orders(created_at desc);
 create index if not exists idx_orders_buyer_wa on public.orders(buyer_wa);
+create index if not exists idx_order_items_order_id on public.order_items(order_id);
+create index if not exists idx_order_items_product_id on public.order_items(product_id);
 create index if not exists idx_store_settings_key on public.store_settings(key);
 
 drop trigger if exists trg_products_set_updated_at on public.products;
@@ -258,6 +300,7 @@ execute function public.set_updated_at();
 
 alter table public.products enable row level security;
 alter table public.orders enable row level security;
+alter table public.order_items enable row level security;
 alter table public.store_settings enable row level security;
 
 drop policy if exists "Public can read active products" on public.products;
@@ -296,6 +339,21 @@ drop policy if exists "Authenticated can update orders" on public.orders;
 create policy "Authenticated can update orders"
 on public.orders
 for update
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated can read order items" on public.order_items;
+create policy "Authenticated can read order items"
+on public.order_items
+for select
+to authenticated
+using (true);
+
+drop policy if exists "Authenticated can manage order items" on public.order_items;
+create policy "Authenticated can manage order items"
+on public.order_items
+for all
 to authenticated
 using (true)
 with check (true);
@@ -543,6 +601,16 @@ begin
       and tablename = 'orders'
   ) then
     alter publication supabase_realtime add table public.orders;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'order_items'
+  ) then
+    alter publication supabase_realtime add table public.order_items;
   end if;
 end
 $$;
