@@ -3,11 +3,8 @@
 import { useActionState } from "react";
 import type { ReactNode } from "react";
 import {
-  CreditCard,
-  LayoutTemplate,
   Navigation,
   PencilRuler,
-  Settings2,
 } from "lucide-react";
 
 import {
@@ -19,7 +16,6 @@ import { RefundCalculator } from "@/components/admin/refund-calculator";
 import { SubmitButton } from "@/components/submit-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { StoreSettings } from "@/types/domain";
 
@@ -136,6 +132,26 @@ function FormNotice({
   );
 }
 
+function SectionLink({
+  href,
+  label,
+  hint,
+}: {
+  href: string;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <a
+      href={href}
+      className="rounded-[24px] border border-line bg-white/80 px-4 py-3 transition hover:border-brand hover:bg-white"
+    >
+      <p className="text-sm font-semibold text-foreground">{label}</p>
+      <p className="mt-1 text-xs leading-6 text-muted">{hint}</p>
+    </a>
+  );
+}
+
 export function StoreSettingsPanel({
   settings,
   liveMode,
@@ -157,14 +173,6 @@ export function StoreSettingsPanel({
     .slice(0, 3)
     .join("")
     .toUpperCase() || "ARR";
-  const contentBlockCount =
-    settings.workflowSteps.length +
-    settings.stackHighlights.length +
-    settings.dashboardNotes.length +
-    settings.paymentInstructionLines.length +
-    settings.operationalNotesLines.length +
-    settings.headerNavLabels.length +
-    settings.footerLinkLabels.length;
 
   return (
     <div className="space-y-8">
@@ -177,69 +185,77 @@ export function StoreSettingsPanel({
         </div>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <div className="flex items-center justify-between">
-            <LayoutTemplate className="h-5 w-5 text-brand" />
-            <Badge tone={liveMode ? "brand" : "accent"}>
-              {liveMode ? "Live Settings" : "Mock Settings"}
-            </Badge>
+      <Card className="space-y-4">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Navigasi cepat</p>
+            <p className="text-sm leading-7 text-muted">
+              Pilih section yang mau diedit dulu biar halaman admin terasa lebih ringan.
+            </p>
           </div>
-          <p className="mt-6 text-sm uppercase tracking-[0.22em] text-muted">
-            Mode Konfigurasi
-          </p>
-          <p className="mt-2 text-3xl font-black">
-            {liveMode ? "Supabase" : "Fallback"}
-          </p>
-          <p className="mt-2 text-sm leading-7 text-muted">
-            Semua panel template publik, checkout, dan pembayaran diambil dari
-            sumber yang sama supaya perubahan admin langsung konsisten.
-          </p>
-        </Card>
+          <Badge tone={liveMode ? "brand" : "accent"}>
+            {liveMode ? "Mode Live" : "Mode Fallback"}
+          </Badge>
+        </div>
 
-        <Card>
-          <div className="flex items-center justify-between">
-            <Settings2 className="h-5 w-5 text-accent" />
-            <Badge>{contentBlockCount} blok</Badge>
-          </div>
-          <p className="mt-6 text-sm uppercase tracking-[0.22em] text-muted">
-            Template Publik
-          </p>
-          <p className="mt-2 text-3xl font-black">Editable</p>
-          <p className="mt-2 text-sm leading-7 text-muted">
-            Brand, navigasi, banner, home sections, footer, checkout flow, dan
-            instruksi pembayaran bisa diedit langsung dari dashboard.
-          </p>
-        </Card>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <SectionLink
+            href="#brand-navigation"
+            label="Brand & Kontak"
+            hint="Logo, nama brand, navigasi, footer, dan WhatsApp publik."
+          />
+          <SectionLink
+            href="#homepage-copy"
+            label="Homepage"
+            hint="Hero, katalog, CTA, workflow, dan card homepage."
+          />
+          <SectionLink
+            href="#payment-settings"
+            label="Pembayaran"
+            hint="Panel checkout buyer, payload QRIS, dan instruksi bayar."
+          />
+          <SectionLink
+            href="#refund-tool"
+            label="Refund"
+            hint="Kalkulator internal untuk hitung refund prorata."
+          />
+        </div>
+      </Card>
 
-        <Card>
-          <div className="flex items-center justify-between">
-            <CreditCard className="h-5 w-5 text-success" />
-            <Badge tone="success">{settings.paymentMerchantName}</Badge>
-          </div>
-          <p className="mt-6 text-sm uppercase tracking-[0.22em] text-muted">
-            Update Terakhir
-          </p>
-          <p className="mt-2 text-3xl font-black">
-            {formatDateTime(settings.updatedAt)}
-          </p>
-          <p className="mt-2 text-sm leading-7 text-muted">
-            QRIS merchant, copy checkout buyer, dan elemen brand ikut memakai
-            konfigurasi ini.
-          </p>
-        </Card>
-      </section>
-
-      <Card className="space-y-6">
+      <div id="template-website">
+        <Card className="space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <Badge tone="brand">Template Website</Badge>
-            <h3 className="mt-3 text-2xl font-black">Edit hampir seluruh template publik</h3>
+            <h3 className="mt-3 text-2xl font-black">Edit isi website publik</h3>
           </div>
           <p className="max-w-2xl text-sm leading-7 text-muted">
-            Section ini mengendalikan brand, header, footer, homepage, dan copy
-            checkout publik. Tujuannya supaya admin tidak perlu sentuh code untuk perubahan rutin.
+            Fokuskan edit ke section yang memang kamu butuhkan. Brand, homepage,
+            dan checkout sekarang dipisah agar tidak terlalu ramai.
           </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <SectionLink
+            href="#brand-navigation"
+            label="Brand"
+            hint="Logo, nama brand, header, footer, dan kontak."
+          />
+          <SectionLink
+            href="#homepage-copy"
+            label="Hero & Katalog"
+            hint="Judul utama, CTA, dan deskripsi katalog."
+          />
+          <SectionLink
+            href="#homepage-sections"
+            label="Workflow & Card"
+            hint="Alur semi-auto, highlights, dan catatan dashboard."
+          />
+          <SectionLink
+            href="#checkout-copy"
+            label="Checkout Buyer"
+            hint="Copy form buyer, tracker, bukti bayar, dan notes."
+          />
         </div>
 
         <form
@@ -247,7 +263,10 @@ export function StoreSettingsPanel({
           encType="multipart/form-data"
           className="grid gap-6"
         >
-          <div className="rounded-[28px] border border-line bg-white/55 p-5">
+          <div
+            id="brand-navigation"
+            className="rounded-[28px] border border-line bg-white/55 p-5"
+          >
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.22em] text-muted">
@@ -391,7 +410,10 @@ export function StoreSettingsPanel({
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-line bg-white/55 p-5">
+          <div
+            id="homepage-copy"
+            className="rounded-[28px] border border-line bg-white/55 p-5"
+          >
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.22em] text-muted">
@@ -466,7 +488,10 @@ export function StoreSettingsPanel({
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-line bg-white/55 p-5">
+          <div
+            id="homepage-sections"
+            className="rounded-[28px] border border-line bg-white/55 p-5"
+          >
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.22em] text-muted">
@@ -615,7 +640,10 @@ export function StoreSettingsPanel({
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-line bg-white/55 p-5">
+          <div
+            id="checkout-copy"
+            className="rounded-[28px] border border-line bg-white/55 p-5"
+          >
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.22em] text-muted">
@@ -782,24 +810,43 @@ export function StoreSettingsPanel({
 
           <FormNotice state={storefrontState} />
         </form>
-      </Card>
+        </Card>
+      </div>
 
-      <Card className="space-y-6">
+      <div id="payment-settings">
+        <Card className="space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <Badge tone="accent">Pembayaran</Badge>
             <h3 className="mt-3 text-2xl font-black">Atur panel checkout dan QRIS</h3>
           </div>
           <p className="max-w-2xl text-sm leading-7 text-muted">
-            QRIS di checkout buyer dihasilkan dari payload yang kamu simpan di sini. Nominal produk tetap mengikuti harga item masing-masing.
+            Bagian ini khusus untuk payment. Jadi kamu tidak perlu scroll ke
+            section template website saat mau edit QRIS.
           </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <SectionLink
+            href="#qris-panel"
+            label="Panel QRIS"
+            hint="Merchant, label QRIS, deskripsi, dan payload EMV."
+          />
+          <SectionLink
+            href="#buyer-instructions"
+            label="Instruksi Buyer"
+            hint="Daftar poin pembayaran yang tampil di checkout."
+          />
         </div>
 
         <form
           action={paymentAction}
           className="grid gap-6"
         >
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div
+            id="qris-panel"
+            className="grid gap-4 lg:grid-cols-2"
+          >
             <Field label="Label QRIS">
               <TextInput
                 name="paymentDisplayLabel"
@@ -847,7 +894,10 @@ export function StoreSettingsPanel({
             </Field>
           </div>
 
-          <div className="rounded-[28px] border border-line bg-white/55 p-5">
+          <div
+            id="buyer-instructions"
+            className="rounded-[28px] border border-line bg-white/55 p-5"
+          >
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.22em] text-muted">
@@ -887,9 +937,12 @@ export function StoreSettingsPanel({
 
           <FormNotice state={paymentState} />
         </form>
-      </Card>
+        </Card>
+      </div>
 
-      <RefundCalculator />
+      <div id="refund-tool">
+        <RefundCalculator />
+      </div>
 
       <Card className="space-y-4">
         <div className="flex items-center gap-3">
