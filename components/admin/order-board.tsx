@@ -70,6 +70,11 @@ export function OrderBoard({ orders }: OrderBoardProps) {
                     {formatUniqueCode(order.uniqueCode)}
                   </p>
                 ) : null}
+                {order.promoCode && order.promoDiscountAmount > 0 ? (
+                  <p className="text-sm leading-7 text-muted">
+                    Promo {order.promoCode} -{formatCurrency(order.promoDiscountAmount)}
+                  </p>
+                ) : null}
                 {order.items.length ? (
                   <div className="space-y-1 text-sm leading-7 text-muted">
                     {order.items.map((item) => (
@@ -122,6 +127,15 @@ export function OrderBoard({ orders }: OrderBoardProps) {
                 </p>
                 <p className="mt-1 text-sm leading-7 text-muted">
                   {order.paymentNote ?? "Belum ada catatan dari buyer."}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-foreground">Promo</p>
+                <p className="mt-1 text-sm leading-7 text-muted">
+                  {order.promoCode && order.promoDiscountAmount > 0
+                    ? `${order.promoCode} (-${formatCurrency(order.promoDiscountAmount)})`
+                    : "Tanpa promo"}
                 </p>
               </div>
 

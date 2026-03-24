@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clock3,
+  TicketPercent,
   Upload,
   WalletCards,
 } from "lucide-react";
@@ -20,6 +21,7 @@ import {
   getOrderStatusMeta,
 } from "@/lib/format";
 import { getQrisImageDataUrl } from "@/lib/payment";
+import { resolvePromoCodeForSubtotal } from "@/lib/promo-codes";
 import {
   formatWhatsappDisplay,
   getFirstValue,
@@ -91,6 +93,7 @@ export default async function CheckoutPage({
     Number.parseInt(getFirstValue(query.quantity) ?? "1", 10),
     product.stock,
   );
+  const rawPromoCode = order?.promoCode ?? getFirstValue(query.promo) ?? "";
   const buyerName = order?.buyerName ?? getFirstValue(query.buyerName) ?? "";
   const rawBuyerWa = order?.buyerWa ?? getFirstValue(query.buyerWa) ?? "";
   const normalizedBuyerWa = normalizeWhatsappNumber(rawBuyerWa);
@@ -117,9 +120,20 @@ export default async function CheckoutPage({
       ? uniqueCodeFromQuery
       : 0);
   const subtotalPrice = order?.subtotalPrice ?? product.price * quantity;
+  const promoPreview =
+    !order && rawPromoCode
+      ? await resolvePromoCodeForSubtotal(rawPromoCode, subtotalPrice)
+      : null;
+  const promoCode =
+    order?.promoCode ??
+    (promoPreview?.ok ? promoPreview.promo?.code ?? null : null);
+  const promoDiscountAmount =
+    order?.promoDiscountAmount ??
+    (promoPreview?.ok ? promoPreview.discountAmount : 0);
+  const discountedSubtotalPrice = Math.max(subtotalPrice - promoDiscountAmount, 0);
   const transferAmount = buyerReady
-    ? order?.totalPrice ?? (subtotalPrice + uniqueCode)
-    : subtotalPrice;
+    ? order?.totalPrice ?? (discountedSubtotalPrice + uniqueCode)
+    : discountedSubtotalPrice;
   const basePrice = subtotalPrice;
   const qrisImageDataUrl = await getQrisImageDataUrl(
     settings.paymentQrisPayload,
@@ -242,6 +256,29 @@ export default async function CheckoutPage({
                     className="rounded-2xl border border-line bg-white/70 px-4 py-3 outline-none transition focus:border-brand"
                   />
                 </label>
+                <details
+                  open={Boolean(rawPromoCode)}
+                  className="rounded-[24px] border border-line bg-white/60 px-4 py-4"
+                >
+                  <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                    <TicketPercent className="h-4 w-4 text-accent" />
+                    Punya voucher / kode promo?
+                  </summary>
+                  <div className="mt-4 grid gap-2">
+                    <label className="grid gap-2 text-sm font-medium">
+                      Kode promo
+                      <input
+                        name="promoCode"
+                        placeholder="Contoh: HEMAT10"
+                        defaultValue={rawPromoCode}
+                        className="rounded-2xl border border-line bg-white/80 px-4 py-3 uppercase outline-none transition focus:border-brand"
+                      />
+                    </label>
+                    <p className="text-xs leading-6 text-muted">
+                      Opsional. Bagian ini sengaja disembunyikan supaya checkout tetap ringkas.
+                    </p>
+                  </div>
+                </details>
                 <SubmitButton
                   idleLabel={settings.checkoutContinueButtonLabel}
                   pendingLabel="Membuat Order..."
@@ -281,6 +318,14 @@ export default async function CheckoutPage({
                 <div>
                   <p className="text-sm text-muted">Seat</p>
                   <p className="mt-2 font-semibold">{quantity} seat</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted">Promo</p>
+                  <p className="mt-2 font-semibold">
+                    {promoCode && promoDiscountAmount > 0
+                      ? `${promoCode} (-${formatCurrency(promoDiscountAmount)})`
+                      : "-"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted">Dibuat</p>
@@ -347,20 +392,19 @@ export default async function CheckoutPage({
                       <p className="mt-2 text-3xl font-black">
                         {formatCurrency(transferAmount)}
                       </p>
-                      {uniqueCode > 0 ? (
-                        <div className="mt-3 space-y-2 text-sm leading-7 text-muted">
-                          <p>Subtotal seat: {formatCurrency(basePrice)}</p>
-                          <p>Seat dipilih: {quantity} seat</p>
-                          <p>Kode unik: {formatUniqueCode(uniqueCode)}</p>
+                      <div className="mt-3 space-y-2 text-sm leading-7 text-muted">
+                        <p>Subtotal seat: {formatCurrency(basePrice)}</p>
+                        {promoDiscountAmount > 0 ? (
                           <p>
-                            Scan QRIS lalu transfer sesuai total akhir di atas.
+                            Promo {promoCode}: -{formatCurrency(promoDiscountAmount)}
                           </p>
-                        </div>
-                      ) : (
-                        <p className="mt-3 text-sm leading-7 text-muted">
-                          Scan QRIS, lalu transfer sesuai nominal yang tampil di halaman ini.
+                        ) : null}
+                        <p>Seat dipilih: {quantity} seat</p>
+                        <p>Kode unik: {uniqueCode > 0 ? formatUniqueCode(uniqueCode) : "-"}</p>
+                        <p>
+                          Scan QRIS lalu transfer sesuai total akhir di atas.
                         </p>
-                      )}
+                      </div>
                     </div>
 
                     <div className="rounded-[24px] border border-line bg-white/60 p-5">
@@ -415,6 +459,11 @@ export default async function CheckoutPage({
                     type="hidden"
                     name="buyerWa"
                     value={buyerWaDisplayValue}
+                  />
+                  <input
+                    type="hidden"
+                    name="promoCode"
+                    value={rawPromoCode}
                   />
                   <input
                     type="hidden"

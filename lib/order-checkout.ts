@@ -1,4 +1,9 @@
 import { mockOrders } from "@/lib/mock-data";
+import {
+  getMissingPromoSchemaMessage,
+  isMissingPromoSchemaError,
+  resolvePromoCodeForSubtotal,
+} from "@/lib/promo-codes";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
 import type { Product } from "@/types/domain";
@@ -16,6 +21,8 @@ export type CreateCheckoutOrderResult =
       ok: true;
       mode: "live" | "mock";
       orderId: string | null;
+      promoCode: string | null;
+      promoDiscountAmount: number;
       uniqueCode: number;
       subtotalPrice: number;
       totalPrice: number;
@@ -112,6 +119,7 @@ export async function createCheckoutOrder(
   items: DraftCheckoutItem[],
   buyerName: string,
   buyerWa: string,
+  promoCodeInput = "",
 ): Promise<CreateCheckoutOrderResult> {
   const normalizedItems = items
     .map((item) => ({
@@ -129,6 +137,20 @@ export async function createCheckoutOrder(
   }
 
   const subtotalPrice = getSubtotalPrice(normalizedItems);
+  const promoResult = await resolvePromoCodeForSubtotal(promoCodeInput, subtotalPrice);
+
+  if (!promoResult.ok) {
+    return {
+      ok: false,
+      mode: hasServiceRoleSupabaseEnv() ? "live" : "mock",
+      message: promoResult.message,
+    };
+  }
+
+  const promoCode = promoResult.promo?.code ?? null;
+  const promoCodeId = promoResult.promo?.id ?? null;
+  const promoDiscountAmount = promoResult.discountAmount;
+  const discountedSubtotalPrice = Math.max(subtotalPrice - promoDiscountAmount, 0);
 
   if (!hasServiceRoleSupabaseEnv()) {
     const uniqueCode = getAvailableUniqueCode(mockOrders.map((order) => order.uniqueCode));
@@ -137,9 +159,11 @@ export async function createCheckoutOrder(
       ok: true,
       mode: "mock",
       orderId: null,
+      promoCode,
+      promoDiscountAmount,
       uniqueCode,
       subtotalPrice,
-      totalPrice: subtotalPrice + uniqueCode,
+      totalPrice: discountedSubtotalPrice + uniqueCode,
     };
   }
 
@@ -152,9 +176,11 @@ export async function createCheckoutOrder(
       ok: true,
       mode: "mock",
       orderId: null,
+      promoCode,
+      promoDiscountAmount,
       uniqueCode,
       subtotalPrice,
-      totalPrice: subtotalPrice + uniqueCode,
+      totalPrice: discountedSubtotalPrice + uniqueCode,
     };
   }
 
@@ -186,7 +212,7 @@ export async function createCheckoutOrder(
     }),
   );
 
-  const totalPrice = subtotalPrice + uniqueCode;
+  const totalPrice = discountedSubtotalPrice + uniqueCode;
   const primaryProduct = normalizedItems[0].product;
 
   const { data: orderData, error: orderError } = await supabase
@@ -195,6 +221,9 @@ export async function createCheckoutOrder(
       product_id: primaryProduct.id,
       buyer_name: buyerName,
       buyer_wa: buyerWa,
+      promo_code_id: promoCodeId,
+      promo_code: promoCode,
+      promo_discount_amount: promoDiscountAmount,
       unique_code: uniqueCode,
       total_price: totalPrice,
       status: "pending",
@@ -207,9 +236,13 @@ export async function createCheckoutOrder(
     return {
       ok: false,
       mode: "live",
-      message: isMissingUniqueCodeColumnError(orderError?.message)
-        ? getMissingOrderSchemaMessage()
-        : "Order gagal dibuat. Coba submit lagi.",
+      message:
+        isMissingUniqueCodeColumnError(orderError?.message) ||
+        isMissingPromoSchemaError(orderError?.message)
+          ? isMissingPromoSchemaError(orderError?.message)
+            ? getMissingPromoSchemaMessage()
+            : getMissingOrderSchemaMessage()
+          : "Order gagal dibuat. Coba submit lagi.",
     };
   }
 
@@ -240,6 +273,8 @@ export async function createCheckoutOrder(
     ok: true,
     mode: "live",
     orderId: orderData.id,
+    promoCode,
+    promoDiscountAmount,
     uniqueCode,
     subtotalPrice,
     totalPrice,

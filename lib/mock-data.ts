@@ -4,6 +4,8 @@ import { defaultStoreSettings } from "@/lib/store-settings";
 import type {
   Order,
   OrderStatus,
+  PromoCode,
+  PromoCodeDraft,
   Product,
   ProductDraft,
   StoreSettings,
@@ -56,6 +58,8 @@ export const mockOrders: Order[] = [
     buyerName: "Budi",
     buyerWa: "081234567890",
     uniqueCode: 123,
+    promoCode: null,
+    promoDiscountAmount: 0,
     ...createMockOrderItems(
       "d9b6ceba-1f4e-4f24-a1b1-9216a8613386",
       "canva-pro-1-bulan",
@@ -77,12 +81,14 @@ export const mockOrders: Order[] = [
     buyerName: "Sari",
     buyerWa: "089500001122",
     uniqueCode: 214,
+    promoCode: "HEMAT10",
+    promoDiscountAmount: 10000,
     ...createMockOrderItems(
       "a0cf5826-97d1-40f0-a7f6-fca9c0540c8b",
       "netflix-premium-1-profil",
       1,
     ),
-    totalPrice: 59214,
+    totalPrice: 49214,
     status: "paid",
     proofImgUrl: null,
     paymentNote: "QRIS BCA",
@@ -98,6 +104,8 @@ export const mockOrders: Order[] = [
     buyerName: "Rizky",
     buyerWa: "087700112233",
     uniqueCode: 87,
+    promoCode: null,
+    promoDiscountAmount: 0,
     ...createMockOrderItems(
       "f26857d2-1f50-4b70-b670-2771b6d1721d",
       "chatgpt-business-1-bulan-team-invite",
@@ -113,6 +121,35 @@ export const mockOrders: Order[] = [
     completedAt: null,
     cancelledAt: null,
     createdAt: new Date(now.getTime() - 1000 * 60 * 5).toISOString(),
+  },
+];
+
+export const mockPromoCodes: PromoCode[] = [
+  {
+    id: "mock-promo-hemat10",
+    code: "HEMAT10",
+    label: "Potong 10 Ribu",
+    description: "Diskon tetap Rp10.000 untuk checkout yang memenuhi minimum belanja.",
+    discountType: "fixed",
+    discountValue: 10000,
+    minimumSubtotal: 30000,
+    maxDiscount: null,
+    isActive: true,
+    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(),
+    updatedAt: new Date(now.getTime() - 1000 * 60 * 60).toISOString(),
+  },
+  {
+    id: "mock-promo-seat5",
+    code: "SEAT5",
+    label: "Diskon 5%",
+    description: "Diskon 5% maksimal Rp15.000 untuk pembelian beberapa seat sekaligus.",
+    discountType: "percent",
+    discountValue: 5,
+    minimumSubtotal: 50000,
+    maxDiscount: 15000,
+    isActive: true,
+    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 20).toISOString(),
+    updatedAt: new Date(now.getTime() - 1000 * 60 * 30).toISOString(),
   },
 ];
 
@@ -200,6 +237,61 @@ export function deleteMockProduct(productId: string) {
 
   const [product] = mockProducts.splice(index, 1);
   return product ?? null;
+}
+
+export function createMockPromoCode(input: PromoCodeDraft) {
+  const promo: PromoCode = {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...input,
+  };
+
+  mockPromoCodes.unshift(promo);
+  return promo;
+}
+
+export function updateMockPromoCode(promoId: string, input: PromoCodeDraft) {
+  const promo = mockPromoCodes.find((item) => item.id === promoId);
+
+  if (!promo) {
+    return null;
+  }
+
+  promo.code = input.code;
+  promo.label = input.label;
+  promo.description = input.description;
+  promo.discountType = input.discountType;
+  promo.discountValue = input.discountValue;
+  promo.minimumSubtotal = input.minimumSubtotal;
+  promo.maxDiscount = input.maxDiscount;
+  promo.isActive = input.isActive;
+  promo.updatedAt = new Date().toISOString();
+
+  return promo;
+}
+
+export function setMockPromoCodeActive(promoId: string, isActive: boolean) {
+  const promo = mockPromoCodes.find((item) => item.id === promoId);
+
+  if (!promo) {
+    return null;
+  }
+
+  promo.isActive = isActive;
+  promo.updatedAt = new Date().toISOString();
+  return promo;
+}
+
+export function deleteMockPromoCode(promoId: string) {
+  const index = mockPromoCodes.findIndex((item) => item.id === promoId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const [promo] = mockPromoCodes.splice(index, 1);
+  return promo ?? null;
 }
 
 export function updateMockStoreSettings(input: StoreSettingsInput) {

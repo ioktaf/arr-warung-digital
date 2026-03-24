@@ -153,6 +153,14 @@ export default async function TrackOrderPage({
                   </p>
                 </div>
                 <div>
+                  <p className="text-sm text-muted">Promo</p>
+                  <p className="mt-1 font-semibold">
+                    {order.promoCode && order.promoDiscountAmount > 0
+                      ? `${order.promoCode} (-${formatCurrency(order.promoDiscountAmount)})`
+                      : "-"}
+                  </p>
+                </div>
+                <div>
                   <p className="text-sm text-muted">Total Seat</p>
                   <p className="mt-1 font-semibold">{order.totalQuantity} seat</p>
                 </div>

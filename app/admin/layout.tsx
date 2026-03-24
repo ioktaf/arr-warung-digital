@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Package2, Settings2, Store } from "lucide-react";
+import { LayoutDashboard, Package2, Settings2, Store, TicketPercent } from "lucide-react";
 
 import { logoutAdminAction } from "@/app/admin/login/actions";
 import { SiteBrand } from "@/components/layout/site-brand";
@@ -11,6 +11,7 @@ import { getAdminStoreSettings } from "@/lib/data";
 const adminLinks = [
   { href: "/admin", label: "Orders", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package2 },
+  { href: "/admin/promos", label: "Promos", icon: TicketPercent },
   { href: "/admin/settings", label: "Settings", icon: Settings2 },
   { href: "/", label: "Storefront", icon: Store },
 ];

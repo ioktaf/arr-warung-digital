@@ -43,6 +43,12 @@ export default async function AdminOrdersPage() {
             Kelola Produk
           </Link>
           <Link
+            href="/admin/promos"
+            className="inline-flex items-center rounded-full border border-line bg-white/70 px-5 py-3 text-sm font-semibold transition hover:bg-white"
+          >
+            Kelola Promo
+          </Link>
+          <Link
             href="/admin/settings"
             className="inline-flex items-center rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-strong"
           >

@@ -50,6 +50,8 @@ type OrderRow = {
   id: string;
   buyer_name: string;
   buyer_wa: string;
+  promo_code?: string | null;
+  promo_discount_amount?: number | string | null;
   unique_code?: number | null;
   total_price: number | string;
   status: OrderStatus;
@@ -182,11 +184,12 @@ function mapOrder(row: OrderRow): Order {
         .map((item) => mapOrderItem(item))
         .filter((item): item is OrderItem => item !== null)
     : [];
+  const promoDiscountAmount = Math.max(0, toNumber(row.promo_discount_amount ?? 0));
   const uniqueCode =
     typeof row.unique_code === "number" ? Math.max(0, row.unique_code) : 0;
   const subtotalPrice =
     relatedItems.reduce((sum, item) => sum + item.subtotalPrice, 0) ||
-    Math.max(toNumber(row.total_price) - uniqueCode, 0);
+    Math.max(toNumber(row.total_price) - uniqueCode + promoDiscountAmount, 0);
   const items =
     relatedItems.length > 0
       ? relatedItems
@@ -205,6 +208,8 @@ function mapOrder(row: OrderRow): Order {
     id: row.id,
     buyerName: row.buyer_name,
     buyerWa: row.buyer_wa,
+    promoCode: row.promo_code ?? null,
+    promoDiscountAmount,
     uniqueCode,
     subtotalPrice,
     totalPrice: toNumber(row.total_price),
@@ -1144,7 +1149,7 @@ export async function getCheckoutOrder(orderId: string) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, buyer_name, buyer_wa, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*), items:order_items(id, quantity, unit_price, subtotal_price, product:products!order_items_product_id_fkey(*))",
+      "id, buyer_name, buyer_wa, promo_code, promo_discount_amount, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*), items:order_items(id, quantity, unit_price, subtotal_price, product:products!order_items_product_id_fkey(*))",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -1193,7 +1198,7 @@ export async function getAdminOrders() {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, buyer_name, buyer_wa, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*), items:order_items(id, quantity, unit_price, subtotal_price, product:products!order_items_product_id_fkey(*))",
+      "id, buyer_name, buyer_wa, promo_code, promo_discount_amount, unique_code, total_price, status, proof_img_url, payment_note, admin_note, payment_confirmed_at, paid_at, completed_at, cancelled_at, created_at, product:products!orders_product_id_fkey(*), items:order_items(id, quantity, unit_price, subtotal_price, product:products!order_items_product_id_fkey(*))",
     )
     .order("created_at", { ascending: false });
 

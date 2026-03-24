@@ -42,11 +42,28 @@ create table if not exists public.products (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.promo_codes (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  label text not null,
+  description text,
+  discount_type text not null check (discount_type in ('fixed', 'percent')),
+  discount_value numeric(12, 2) not null check (discount_value > 0),
+  minimum_subtotal numeric(12, 2) not null default 0 check (minimum_subtotal >= 0),
+  max_discount numeric(12, 2) check (max_discount >= 0),
+  is_active boolean not null default true,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   product_id uuid not null references public.products(id) on delete restrict,
   buyer_name text not null,
   buyer_wa text not null,
+  promo_code_id uuid references public.promo_codes(id) on delete set null,
+  promo_code text,
+  promo_discount_amount numeric(12, 2) not null default 0 check (promo_discount_amount >= 0),
   unique_code integer not null default 0 check (unique_code >= 0 and unique_code <= 299),
   total_price numeric(12, 2) not null check (total_price >= 0),
   status public.order_status not null default 'pending',
@@ -139,6 +156,19 @@ create table if not exists public.store_settings (
 
 alter table public.orders
 add column if not exists unique_code integer not null default 0;
+
+alter table public.orders
+add column if not exists promo_code_id uuid references public.promo_codes(id) on delete set null;
+
+alter table public.orders
+add column if not exists promo_code text;
+
+alter table public.orders
+add column if not exists promo_discount_amount numeric(12, 2) not null default 0;
+
+update public.orders
+set promo_discount_amount = 0
+where promo_discount_amount is null;
 
 do $$
 declare
@@ -316,7 +346,10 @@ add column if not exists order_snapshot_title text not null default 'Snapshot Or
 
 create index if not exists idx_products_category on public.products(category);
 create index if not exists idx_products_is_active on public.products(is_active);
+create index if not exists idx_promo_codes_code on public.promo_codes(code);
+create index if not exists idx_promo_codes_is_active on public.promo_codes(is_active);
 create index if not exists idx_orders_product_id on public.orders(product_id);
+create index if not exists idx_orders_promo_code_id on public.orders(promo_code_id);
 create index if not exists idx_orders_status on public.orders(status);
 create index if not exists idx_orders_created_at on public.orders(created_at desc);
 create index if not exists idx_orders_buyer_wa on public.orders(buyer_wa);
@@ -327,6 +360,12 @@ create index if not exists idx_store_settings_key on public.store_settings(key);
 drop trigger if exists trg_products_set_updated_at on public.products;
 create trigger trg_products_set_updated_at
 before update on public.products
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists trg_promo_codes_set_updated_at on public.promo_codes;
+create trigger trg_promo_codes_set_updated_at
+before update on public.promo_codes
 for each row
 execute function public.set_updated_at();
 
@@ -343,6 +382,7 @@ for each row
 execute function public.set_updated_at();
 
 alter table public.products enable row level security;
+alter table public.promo_codes enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.store_settings enable row level security;
@@ -357,6 +397,21 @@ using (is_active = true);
 drop policy if exists "Authenticated can manage products" on public.products;
 create policy "Authenticated can manage products"
 on public.products
+for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated can read promo codes" on public.promo_codes;
+create policy "Authenticated can read promo codes"
+on public.promo_codes
+for select
+to authenticated
+using (true);
+
+drop policy if exists "Authenticated can manage promo codes" on public.promo_codes;
+create policy "Authenticated can manage promo codes"
+on public.promo_codes
 for all
 to authenticated
 using (true)

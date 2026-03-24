@@ -30,6 +30,7 @@ export async function beginCheckoutAction(formData: FormData) {
   const slug = getTextValue(formData.get("slug"));
   const buyerName = getTextValue(formData.get("buyerName"));
   const buyerWa = normalizeWhatsappNumber(getTextValue(formData.get("buyerWa")));
+  const promoCode = getTextValue(formData.get("promoCode"));
 
   if (!slug) {
     redirect("/");
@@ -55,6 +56,10 @@ export async function beginCheckoutAction(formData: FormData) {
     searchParams.set("buyerWa", buyerWa);
   }
 
+  if (promoCode) {
+    searchParams.set("promo", promoCode);
+  }
+
   searchParams.set("quantity", String(quantity));
 
   if (quantity <= 0) {
@@ -71,6 +76,7 @@ export async function beginCheckoutAction(formData: FormData) {
     [{ product, quantity }],
     buyerName,
     buyerWa,
+    promoCode,
   );
 
   if (!result.ok) {
@@ -96,6 +102,7 @@ export async function confirmPaymentAction(formData: FormData) {
   const orderId = getTextValue(formData.get("orderId"));
   const buyerName = getTextValue(formData.get("buyerName"));
   const buyerWa = normalizeWhatsappNumber(getTextValue(formData.get("buyerWa")));
+  const promoCode = getTextValue(formData.get("promoCode"));
   const uniqueCode = parseUniqueCode(getTextValue(formData.get("uniqueCode")));
   const paymentNote = getTextValue(formData.get("paymentNote"));
   const proofFile = formData.get("proofFile");
@@ -113,6 +120,10 @@ export async function confirmPaymentAction(formData: FormData) {
 
   if (buyerWa) {
     searchParams.set("buyerWa", buyerWa);
+  }
+
+  if (promoCode) {
+    searchParams.set("promo", promoCode);
   }
 
   if (quantity) {

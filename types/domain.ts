@@ -8,6 +8,10 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+export const PROMO_DISCOUNT_TYPES = ["fixed", "percent"] as const;
+
+export type PromoDiscountType = (typeof PROMO_DISCOUNT_TYPES)[number];
+
 export type ProductDraft = {
   title: string;
   slug: string;
@@ -48,6 +52,8 @@ export type Order = {
   buyerWa: string;
   uniqueCode: number;
   subtotalPrice: number;
+  promoCode: string | null;
+  promoDiscountAmount: number;
   totalPrice: number;
   totalQuantity: number;
   status: OrderStatus;
@@ -61,6 +67,23 @@ export type Order = {
   createdAt: string;
   items: OrderItem[];
   product: Product;
+};
+
+export type PromoCodeDraft = {
+  code: string;
+  label: string;
+  description: string;
+  discountType: PromoDiscountType;
+  discountValue: number;
+  minimumSubtotal: number;
+  maxDiscount: number | null;
+  isActive: boolean;
+};
+
+export type PromoCode = PromoCodeDraft & {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type StoreWorkflowStep = {
