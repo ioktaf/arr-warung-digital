@@ -137,7 +137,10 @@ export function StoreSettingsPanel({
   return (
     <div className="space-y-8">
       {notice ? (
-        <div className={cn("rounded-[24px] px-5 py-4 text-sm", noticeToneClasses[noticeTone])}>
+        <div
+          id="settings-notice"
+          className={cn("rounded-[24px] px-5 py-4 text-sm", noticeToneClasses[noticeTone])}
+        >
           {notice}
         </div>
       ) : null}

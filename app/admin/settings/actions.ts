@@ -17,7 +17,7 @@ function getTextValue(value: FormDataEntryValue | null) {
 
 function redirectToSettings(notice: string, tone: NoticeTone = "success"): never {
   const searchParams = new URLSearchParams({ notice, tone });
-  redirect(`/admin/settings?${searchParams.toString()}`);
+  redirect(`/admin/settings?${searchParams.toString()}#settings-notice`);
 }
 
 function revalidateSettingsRoutes() {
