@@ -514,7 +514,9 @@ function isMissingStoreSettingsTableError(message: string | undefined) {
 
   return (
     normalized.includes("store_settings") &&
-    (normalized.includes("does not exist") || normalized.includes("relation"))
+    ((normalized.includes("relation") && normalized.includes("does not exist")) ||
+      (normalized.includes("could not find the table") &&
+        normalized.includes("schema cache")))
   );
 }
 
@@ -539,6 +541,22 @@ function isOutdatedStoreSettingsSchemaError(message: string | undefined) {
 
 function getStoreSettingsSchemaMessage() {
   return "Schema store_settings di Supabase belum versi terbaru. Jalankan schema.sql terbaru lalu coba simpan lagi.";
+}
+
+function getStoreSettingsUpdateMessage(message: string | undefined) {
+  if (isMissingStoreSettingsTableError(message)) {
+    return getStoreSettingsTableMessage();
+  }
+
+  if (isOutdatedStoreSettingsSchemaError(message)) {
+    return `${getStoreSettingsSchemaMessage()} Detail teknis: ${message}`;
+  }
+
+  if (message) {
+    return `Pengaturan storefront atau pembayaran gagal disimpan. Detail teknis: ${message}`;
+  }
+
+  return "Pengaturan storefront atau pembayaran gagal disimpan. Coba lagi sebentar.";
 }
 
 function hasConflictingMockSlug(slug: string, excludedProductId?: string) {
@@ -675,11 +693,7 @@ export async function updateStoreSettings(
     return {
       ok: false,
       mode: "live",
-      message: isMissingStoreSettingsTableError(error?.message)
-        ? getStoreSettingsTableMessage()
-        : isOutdatedStoreSettingsSchemaError(error?.message)
-          ? getStoreSettingsSchemaMessage()
-          : "Pengaturan storefront atau pembayaran gagal disimpan. Coba lagi sebentar.",
+      message: getStoreSettingsUpdateMessage(error?.message),
     };
   }
 
