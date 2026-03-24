@@ -1,3 +1,6 @@
+"use client";
+
+import { useActionState } from "react";
 import type { ReactNode } from "react";
 import {
   CreditCard,
@@ -8,6 +11,7 @@ import {
 } from "lucide-react";
 
 import {
+  type SettingsActionState,
   updatePaymentSettingsAction,
   updateStorefrontSettingsAction,
 } from "@/app/admin/settings/actions";
@@ -112,12 +116,40 @@ function FileInput({
   );
 }
 
+function FormNotice({
+  state,
+}: {
+  state: SettingsActionState | undefined;
+}) {
+  if (!state?.notice) {
+    return null;
+  }
+
+  const tone = state.tone ?? "success";
+
+  return (
+    <div
+      className={cn("rounded-[24px] px-5 py-4 text-sm", noticeToneClasses[tone])}
+    >
+      {state.notice}
+    </div>
+  );
+}
+
 export function StoreSettingsPanel({
   settings,
   liveMode,
   notice,
   noticeTone = "success",
 }: StoreSettingsPanelProps) {
+  const [storefrontState, storefrontAction] = useActionState(
+    updateStorefrontSettingsAction,
+    undefined,
+  );
+  const [paymentState, paymentAction] = useActionState(
+    updatePaymentSettingsAction,
+    undefined,
+  );
   const brandMark = (settings.brandCompactName || settings.brandName)
     .split(/\s+/)
     .map((part) => part.trim().charAt(0))
@@ -211,7 +243,7 @@ export function StoreSettingsPanel({
         </div>
 
         <form
-          action={updateStorefrontSettingsAction}
+          action={storefrontAction}
           encType="multipart/form-data"
           className="grid gap-6"
         >
@@ -747,6 +779,8 @@ export function StoreSettingsPanel({
               Setelah disimpan, header, footer, homepage, dan slug checkout publik akan ikut direfresh otomatis.
             </p>
           </div>
+
+          <FormNotice state={storefrontState} />
         </form>
       </Card>
 
@@ -762,7 +796,7 @@ export function StoreSettingsPanel({
         </div>
 
         <form
-          action={updatePaymentSettingsAction}
+          action={paymentAction}
           className="grid gap-6"
         >
           <div className="grid gap-4 lg:grid-cols-2">
@@ -850,6 +884,8 @@ export function StoreSettingsPanel({
               Kalau payload QRIS diganti, semua halaman checkout publik akan ikut menampilkan QR baru.
             </p>
           </div>
+
+          <FormNotice state={paymentState} />
         </form>
       </Card>
 

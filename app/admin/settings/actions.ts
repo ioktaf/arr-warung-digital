@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { requireAdminSession } from "@/lib/admin-auth";
 import { updateStoreSettings } from "@/lib/data";
@@ -10,14 +9,20 @@ import { defaultStoreSettingsInput } from "@/lib/store-settings";
 import type { StoreSettingsInput, StoreWorkflowStep } from "@/types/domain";
 
 type NoticeTone = "success" | "danger" | "accent";
+export type SettingsActionState = {
+  notice?: string;
+  tone?: NoticeTone;
+};
 
 function getTextValue(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function redirectToSettings(notice: string, tone: NoticeTone = "success"): never {
-  const searchParams = new URLSearchParams({ notice, tone });
-  redirect(`/admin/settings?${searchParams.toString()}#settings-notice`);
+function createSettingsActionState(
+  notice: string,
+  tone: NoticeTone = "success",
+): SettingsActionState {
+  return { notice, tone };
 }
 
 function revalidateSettingsRoutes() {
@@ -166,7 +171,10 @@ function buildPaymentSettingsInput(
   };
 }
 
-export async function updateStorefrontSettingsAction(formData: FormData) {
+export async function updateStorefrontSettingsAction(
+  _previousState: SettingsActionState | undefined,
+  formData: FormData,
+): Promise<SettingsActionState> {
   await requireAdminSession();
 
   const nextInput = buildStorefrontSettingsInput(formData);
@@ -179,7 +187,7 @@ export async function updateStorefrontSettingsAction(formData: FormData) {
     );
 
     if (!uploadResult.ok) {
-      redirectToSettings(uploadResult.message, "danger");
+      return createSettingsActionState(uploadResult.message, "danger");
     }
 
     nextInput.brandLogoUrl = uploadResult.publicUrl;
@@ -188,14 +196,14 @@ export async function updateStorefrontSettingsAction(formData: FormData) {
   const result = await updateStoreSettings(nextInput);
 
   if (!result.ok) {
-    redirectToSettings(
+    return createSettingsActionState(
       result.message ?? "Pengaturan storefront gagal disimpan.",
       "danger",
     );
   }
 
   revalidateSettingsRoutes();
-  redirectToSettings(
+  return createSettingsActionState(
     result.mode === "mock"
       ? "Pengaturan storefront tersimpan di mode demo. Supabase live belum aktif penuh."
       : "Pengaturan storefront berhasil diperbarui.",
@@ -203,20 +211,23 @@ export async function updateStorefrontSettingsAction(formData: FormData) {
   );
 }
 
-export async function updatePaymentSettingsAction(formData: FormData) {
+export async function updatePaymentSettingsAction(
+  _previousState: SettingsActionState | undefined,
+  formData: FormData,
+): Promise<SettingsActionState> {
   await requireAdminSession();
 
   const result = await updateStoreSettings(buildPaymentSettingsInput(formData));
 
   if (!result.ok) {
-    redirectToSettings(
+    return createSettingsActionState(
       result.message ?? "Pengaturan pembayaran gagal disimpan.",
       "danger",
     );
   }
 
   revalidateSettingsRoutes();
-  redirectToSettings(
+  return createSettingsActionState(
     result.mode === "mock"
       ? "Pengaturan pembayaran tersimpan di mode demo. Supabase live belum aktif penuh."
       : "Pengaturan pembayaran berhasil diperbarui.",
