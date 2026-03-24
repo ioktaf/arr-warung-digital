@@ -391,7 +391,7 @@ function toStoreSettingsRowPayload(input: StoreSettingsInput) {
     brand_tagline: normalized.brandTagline,
     header_status_badge: normalized.headerStatusBadge,
     header_nav_labels: normalized.headerNavLabels,
-    contact_whatsapp_number: normalized.contactWhatsappNumber || null,
+    contact_whatsapp_number: normalized.contactWhatsappNumber,
     contact_whatsapp_label: normalized.contactWhatsappLabel,
     footer_description: normalized.footerDescription,
     footer_link_labels: normalized.footerLinkLabels,
