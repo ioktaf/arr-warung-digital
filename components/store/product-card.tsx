@@ -39,7 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <img
               src={product.imageUrl}
               alt={product.title}
-              className="h-48 w-full object-cover"
+              className="h-48 w-full bg-white p-4 object-contain"
             />
           </div>
         ) : null}

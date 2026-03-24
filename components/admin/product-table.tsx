@@ -136,8 +136,8 @@ function ProductFormFields({ product }: ProductFormFieldsProps) {
       </Field>
 
       <Field
-        label="Upload gambar produk"
-        hint="Upload file langsung dari komputer. Kalau diisi, file ini akan dipakai sebagai gambar utama produk."
+        label="Upload logo / gambar produk"
+        hint="Upload file langsung dari komputer. Cocok untuk logo brand, icon layanan, atau gambar utama produk."
       >
         <FileInput
           name="imageFile"
@@ -146,8 +146,8 @@ function ProductFormFields({ product }: ProductFormFieldsProps) {
       </Field>
 
       <Field
-        label="Image URL"
-        hint="Opsional. Bisa diisi nanti kalau mau pakai gambar produk khusus."
+        label="URL logo / gambar"
+        hint="Opsional. Bisa dipakai kalau kamu ingin isi logo produk lewat link publik."
       >
         <TextInput
           name="imageUrl"
@@ -158,7 +158,7 @@ function ProductFormFields({ product }: ProductFormFieldsProps) {
       </Field>
 
       <div className="rounded-[24px] border border-line bg-white/70 p-4 lg:col-span-2">
-        <p className="text-sm font-semibold text-foreground">Preview gambar produk</p>
+        <p className="text-sm font-semibold text-foreground">Preview logo / gambar produk</p>
         <div className="mt-4 flex items-center gap-4">
           {product?.imageUrl ? (
             <>
@@ -166,7 +166,7 @@ function ProductFormFields({ product }: ProductFormFieldsProps) {
               <img
                 src={product.imageUrl}
                 alt={product.title}
-                className="h-20 w-20 rounded-2xl border border-line bg-white object-cover"
+                className="h-20 w-20 rounded-2xl border border-line bg-white p-2 object-contain"
               />
             </>
           ) : (
@@ -175,8 +175,8 @@ function ProductFormFields({ product }: ProductFormFieldsProps) {
             </div>
           )}
           <p className="text-sm leading-7 text-muted">
-            Kalau belum ada gambar, kartu produk publik tetap tampil rapi
-            dengan layout teks.
+            Logo kecil maupun gambar penuh sama-sama bisa dipakai. Kalau belum
+            ada file, kartu produk publik tetap tampil rapi dengan layout teks.
           </p>
         </div>
       </div>
