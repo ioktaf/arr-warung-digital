@@ -33,6 +33,17 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className="flex h-full flex-col gap-6">
       <div className="grid-pattern rounded-[22px] border border-line bg-white/55 p-5">
+        {product.imageUrl ? (
+          <div className="mb-5 overflow-hidden rounded-[22px] border border-line bg-white/75">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={product.imageUrl}
+              alt={product.title}
+              className="h-48 w-full object-cover"
+            />
+          </div>
+        ) : null}
+
         <div className="mb-10 flex items-start justify-between gap-4">
           <Badge>{product.category}</Badge>
           <div className="rounded-2xl bg-brand/10 p-3 text-brand">

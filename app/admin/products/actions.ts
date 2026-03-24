@@ -10,6 +10,7 @@ import {
   setProductActive,
   updateProduct,
 } from "@/lib/data";
+import { getImageFile, uploadProductImage } from "@/lib/storage-assets";
 import type { ProductDraft } from "@/types/domain";
 
 type NoticeTone = "success" | "danger" | "accent";
@@ -83,6 +84,18 @@ export async function createProductAction(formData: FormData) {
     redirectToProducts("Data produk belum lengkap. Cek judul, harga, dan stok.", "danger");
   }
 
+  const imageFile = getImageFile(formData, "imageFile");
+
+  if (imageFile) {
+    const uploadResult = await uploadProductImage(imageFile, draft.title);
+
+    if (!uploadResult.ok) {
+      redirectToProducts(uploadResult.message, "danger");
+    }
+
+    draft.imageUrl = uploadResult.publicUrl;
+  }
+
   const result = await createProduct(draft);
 
   if (!result.ok) {
@@ -104,6 +117,18 @@ export async function updateProductAction(formData: FormData) {
 
   if (!productId || !draft) {
     redirectToProducts("Data produk belum lengkap. Cek judul, harga, dan stok.", "danger");
+  }
+
+  const imageFile = getImageFile(formData, "imageFile");
+
+  if (imageFile) {
+    const uploadResult = await uploadProductImage(imageFile, draft.title);
+
+    if (!uploadResult.ok) {
+      redirectToProducts(uploadResult.message, "danger");
+    }
+
+    draft.imageUrl = uploadResult.publicUrl;
   }
 
   const result = await updateProduct(productId, draft);

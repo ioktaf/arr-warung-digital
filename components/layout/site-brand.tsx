@@ -42,7 +42,7 @@ export function SiteBrand({
             src={logoUrl}
             alt={title}
             className={cn(
-              "h-11 w-11 rounded-2xl border border-line bg-white object-contain p-1.5",
+              "h-11 w-11 rounded-2xl border border-line bg-white object-cover",
               iconClassName,
             )}
           />

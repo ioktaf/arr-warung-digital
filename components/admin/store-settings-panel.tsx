@@ -95,6 +95,23 @@ function TextareaInput({
   );
 }
 
+function FileInput({
+  name,
+  accept = "image/*",
+}: {
+  name: string;
+  accept?: string;
+}) {
+  return (
+    <input
+      name={name}
+      type="file"
+      accept={accept}
+      className="rounded-2xl border border-dashed border-line bg-white/75 px-4 py-3 text-sm outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:border-brand"
+    />
+  );
+}
+
 export function StoreSettingsPanel({
   settings,
   liveMode,
@@ -192,6 +209,7 @@ export function StoreSettingsPanel({
 
         <form
           action={updateStorefrontSettingsAction}
+          encType="multipart/form-data"
           className="grid gap-6"
         >
           <div className="rounded-[28px] border border-line bg-white/55 p-5">
@@ -241,8 +259,19 @@ export function StoreSettingsPanel({
                 />
               </Field>
               <Field
+                label="Upload logo baru"
+                hint="Upload file langsung dari komputer. Kalau diisi, file ini akan dipakai sebagai logo website."
+                className="lg:col-span-2"
+              >
+                <FileInput
+                  name="brandLogoFile"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                />
+              </Field>
+
+              <Field
                 label="Logo URL"
-                hint="Bisa pakai URL gambar publik dari Supabase Storage, CDN, atau file statis."
+                hint="Masih bisa dipakai sebagai fallback manual kalau kamu belum upload file."
                 className="lg:col-span-2"
               >
                 <TextInput
@@ -261,7 +290,7 @@ export function StoreSettingsPanel({
                       <img
                         src={settings.brandLogoUrl}
                         alt="Logo website"
-                        className="h-16 w-16 rounded-2xl border border-line bg-white object-contain p-2"
+                        className="h-16 w-16 rounded-2xl border border-line bg-white object-cover"
                       />
                     </>
                   ) : (

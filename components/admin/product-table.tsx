@@ -86,6 +86,23 @@ function TextInput({
   );
 }
 
+function FileInput({
+  name,
+  accept = "image/*",
+}: {
+  name: string;
+  accept?: string;
+}) {
+  return (
+    <input
+      name={name}
+      type="file"
+      accept={accept}
+      className="rounded-2xl border border-dashed border-line bg-white/75 px-4 py-3 text-sm outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:border-brand"
+    />
+  );
+}
+
 function ProductFormFields({ product }: ProductFormFieldsProps) {
   return (
     <>
@@ -119,6 +136,16 @@ function ProductFormFields({ product }: ProductFormFieldsProps) {
       </Field>
 
       <Field
+        label="Upload gambar produk"
+        hint="Upload file langsung dari komputer. Kalau diisi, file ini akan dipakai sebagai gambar utama produk."
+      >
+        <FileInput
+          name="imageFile"
+          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+        />
+      </Field>
+
+      <Field
         label="Image URL"
         hint="Opsional. Bisa diisi nanti kalau mau pakai gambar produk khusus."
       >
@@ -129,6 +156,30 @@ function ProductFormFields({ product }: ProductFormFieldsProps) {
           placeholder="https://..."
         />
       </Field>
+
+      <div className="rounded-[24px] border border-line bg-white/70 p-4 lg:col-span-2">
+        <p className="text-sm font-semibold text-foreground">Preview gambar produk</p>
+        <div className="mt-4 flex items-center gap-4">
+          {product?.imageUrl ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={product.imageUrl}
+                alt={product.title}
+                className="h-20 w-20 rounded-2xl border border-line bg-white object-cover"
+              />
+            </>
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-dashed border-line bg-white text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+              No image
+            </div>
+          )}
+          <p className="text-sm leading-7 text-muted">
+            Kalau belum ada gambar, kartu produk publik tetap tampil rapi
+            dengan layout teks.
+          </p>
+        </div>
+      </div>
 
       <Field label="Harga">
         <TextInput
@@ -220,6 +271,7 @@ export function ProductTable({
 
         <form
           action={createProductAction}
+          encType="multipart/form-data"
           className="grid gap-4 lg:grid-cols-2"
         >
           <ProductFormFields />
@@ -273,7 +325,7 @@ export function ProductTable({
                     /{product.slug}
                   </p>
                   <p className="text-sm leading-7 text-muted">
-                    {product.category} • dibuat {formatDateTime(product.createdAt)}
+                    {product.category} - dibuat {formatDateTime(product.createdAt)}
                   </p>
                 </div>
 
@@ -289,6 +341,7 @@ export function ProductTable({
               <div className="border-t border-line px-5 py-5">
                 <form
                   action={updateProductAction}
+                  encType="multipart/form-data"
                   className="grid gap-4 lg:grid-cols-2"
                 >
                   <input

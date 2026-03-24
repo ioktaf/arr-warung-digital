@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdminSession } from "@/lib/admin-auth";
 import { updateStoreSettings } from "@/lib/data";
+import { getImageFile, uploadBrandLogo } from "@/lib/storage-assets";
 import { defaultStoreSettingsInput } from "@/lib/store-settings";
 import type { StoreSettingsInput, StoreWorkflowStep } from "@/types/domain";
 
@@ -168,7 +169,23 @@ function buildPaymentSettingsInput(
 export async function updateStorefrontSettingsAction(formData: FormData) {
   await requireAdminSession();
 
-  const result = await updateStoreSettings(buildStorefrontSettingsInput(formData));
+  const nextInput = buildStorefrontSettingsInput(formData);
+  const logoFile = getImageFile(formData, "brandLogoFile");
+
+  if (logoFile) {
+    const uploadResult = await uploadBrandLogo(
+      logoFile,
+      nextInput.brandName || defaultStoreSettingsInput.brandName,
+    );
+
+    if (!uploadResult.ok) {
+      redirectToSettings(uploadResult.message, "danger");
+    }
+
+    nextInput.brandLogoUrl = uploadResult.publicUrl;
+  }
+
+  const result = await updateStoreSettings(nextInput);
 
   if (!result.ok) {
     redirectToSettings(
