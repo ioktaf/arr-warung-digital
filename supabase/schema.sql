@@ -154,6 +154,32 @@ create table if not exists public.store_settings (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.app_runtime_meta (
+  key text primary key,
+  value_text text not null,
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.admin_activity_logs (
+  id uuid primary key default gen_random_uuid(),
+  actor_label text not null,
+  action text not null,
+  target_type text not null,
+  target_id text,
+  summary text not null,
+  details jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.system_events (
+  id uuid primary key default gen_random_uuid(),
+  source text not null,
+  severity text not null check (severity in ('info', 'warning', 'error')),
+  message text not null,
+  details jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
 alter table public.orders
 add column if not exists unique_code integer not null default 0;
 
@@ -356,6 +382,10 @@ create index if not exists idx_orders_buyer_wa on public.orders(buyer_wa);
 create index if not exists idx_order_items_order_id on public.order_items(order_id);
 create index if not exists idx_order_items_product_id on public.order_items(product_id);
 create index if not exists idx_store_settings_key on public.store_settings(key);
+create index if not exists idx_admin_activity_logs_created_at on public.admin_activity_logs(created_at desc);
+create index if not exists idx_admin_activity_logs_action on public.admin_activity_logs(action);
+create index if not exists idx_system_events_created_at on public.system_events(created_at desc);
+create index if not exists idx_system_events_severity on public.system_events(severity);
 
 drop trigger if exists trg_products_set_updated_at on public.products;
 create trigger trg_products_set_updated_at
@@ -386,6 +416,9 @@ alter table public.promo_codes enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.store_settings enable row level security;
+alter table public.app_runtime_meta enable row level security;
+alter table public.admin_activity_logs enable row level security;
+alter table public.system_events enable row level security;
 
 drop policy if exists "Public can read active products" on public.products;
 create policy "Public can read active products"
@@ -467,6 +500,51 @@ using (true);
 drop policy if exists "Authenticated can manage store settings" on public.store_settings;
 create policy "Authenticated can manage store settings"
 on public.store_settings
+for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated can read runtime meta" on public.app_runtime_meta;
+create policy "Authenticated can read runtime meta"
+on public.app_runtime_meta
+for select
+to authenticated
+using (true);
+
+drop policy if exists "Authenticated can manage runtime meta" on public.app_runtime_meta;
+create policy "Authenticated can manage runtime meta"
+on public.app_runtime_meta
+for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated can read admin activity logs" on public.admin_activity_logs;
+create policy "Authenticated can read admin activity logs"
+on public.admin_activity_logs
+for select
+to authenticated
+using (true);
+
+drop policy if exists "Authenticated can manage admin activity logs" on public.admin_activity_logs;
+create policy "Authenticated can manage admin activity logs"
+on public.admin_activity_logs
+for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated can read system events" on public.system_events;
+create policy "Authenticated can read system events"
+on public.system_events
+for select
+to authenticated
+using (true);
+
+drop policy if exists "Authenticated can manage system events" on public.system_events;
+create policy "Authenticated can manage system events"
+on public.system_events
 for all
 to authenticated
 using (true)
@@ -621,6 +699,15 @@ values (
   'Snapshot Order'
 )
 on conflict (key) do nothing;
+
+insert into public.app_runtime_meta (key, value_text)
+values
+  ('schema_version', '20260331_ops_batch_v1'),
+  ('schema_name', 'arr-warung-digital')
+on conflict (key) do update
+set
+  value_text = excluded.value_text,
+  updated_at = timezone('utc', now());
 
 update public.store_settings
 set payment_checkout_description = 'Base QRIS merchant tetap sama, tapi nominal QR akan mengikuti total order dan sudah termasuk kode unik untuk bantu admin cek mutasi.'

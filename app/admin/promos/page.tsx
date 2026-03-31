@@ -7,8 +7,6 @@ import { getAdminPromoCodes } from "@/lib/promo-codes";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
 import { getFirstValue } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
-
 type AdminPromosPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };

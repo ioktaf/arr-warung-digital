@@ -4,8 +4,6 @@ import { getAdminStoreSettings } from "@/lib/data";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
 import { getFirstValue } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
-
 type AdminSettingsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };

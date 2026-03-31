@@ -1,7 +1,11 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { recordSystemEvent } from "@/lib/system-events";
 import { slugify } from "@/lib/utils";
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_SOURCE_IMAGE_SIZE = 8 * 1024 * 1024;
+const MAX_STORED_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 1600;
+const WEBP_QUALITY = 84;
 
 const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -68,6 +72,88 @@ function getFileExtension(file: File) {
   return rawName.slice(lastDot + 1).toLowerCase() || "png";
 }
 
+async function prepareImageUpload(file: File) {
+  if (file.size > MAX_SOURCE_IMAGE_SIZE) {
+    return {
+      ok: false as const,
+      message: "Ukuran file maksimal 8 MB sebelum diproses.",
+    };
+  }
+
+  const sourceBuffer = Buffer.from(await file.arrayBuffer());
+
+  if (file.type === "image/svg+xml" || file.type === "image/gif") {
+    if (sourceBuffer.byteLength > MAX_STORED_IMAGE_SIZE) {
+      return {
+        ok: false as const,
+        message: "Ukuran gambar SVG/GIF maksimal 5 MB.",
+      };
+    }
+
+    return {
+      ok: true as const,
+      buffer: new Uint8Array(sourceBuffer),
+      contentType: file.type,
+      extension: getFileExtension(file),
+    };
+  }
+
+  try {
+    const sharp = (await import("sharp")).default;
+    const transformedBuffer = await sharp(sourceBuffer)
+      .rotate()
+      .resize({
+        width: MAX_IMAGE_DIMENSION,
+        height: MAX_IMAGE_DIMENSION,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality: WEBP_QUALITY })
+      .toBuffer();
+
+    if (transformedBuffer.byteLength > MAX_STORED_IMAGE_SIZE) {
+      return {
+        ok: false as const,
+        message:
+          "Gambar masih terlalu besar setelah diproses. Coba gunakan gambar yang lebih ringan.",
+      };
+    }
+
+    return {
+      ok: true as const,
+      buffer: new Uint8Array(transformedBuffer),
+      contentType: "image/webp",
+      extension: "webp",
+    };
+  } catch (error) {
+    await recordSystemEvent({
+      source: "storage-assets",
+      severity: "warning",
+      message: "Optimasi gambar gagal, memakai file asli sebagai fallback.",
+      details: {
+        fileType: file.type,
+        fileName: file.name,
+        error: error instanceof Error ? error.message : "unknown-error",
+      },
+    });
+
+    if (sourceBuffer.byteLength > MAX_STORED_IMAGE_SIZE) {
+      return {
+        ok: false as const,
+        message:
+          "Gambar terlalu besar dan gagal diproses otomatis. Coba kompres dulu lalu upload ulang.",
+      };
+    }
+
+    return {
+      ok: true as const,
+      buffer: new Uint8Array(sourceBuffer),
+      contentType: file.type,
+      extension: getFileExtension(file),
+    };
+  }
+}
+
 function buildAssetPath(folder: string, nameHint: string, extension: string) {
   const safeName = slugify(nameHint) || "asset";
   return `${folder}/${safeName}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
@@ -87,13 +173,6 @@ async function uploadImageAsset({
     };
   }
 
-  if (file.size > MAX_IMAGE_SIZE) {
-    return {
-      ok: false,
-      message: "Ukuran gambar maksimal 5 MB.",
-    };
-  }
-
   const supabase = createSupabaseAdminClient();
 
   if (!supabase) {
@@ -104,15 +183,32 @@ async function uploadImageAsset({
     };
   }
 
-  const path = buildAssetPath(folder, nameHint, getFileExtension(file));
-  const fileBuffer = new Uint8Array(await file.arrayBuffer());
-  const { error } = await supabase.storage.from(bucket).upload(path, fileBuffer, {
-    contentType: file.type,
-    upsert: false,
-  });
+  const preparedImage = await prepareImageUpload(file);
+
+  if (!preparedImage.ok) {
+    return preparedImage;
+  }
+
+  const path = buildAssetPath(folder, nameHint, preparedImage.extension);
+  const { error } = await supabase.storage
+    .from(bucket)
+    .upload(path, preparedImage.buffer, {
+      contentType: preparedImage.contentType,
+      upsert: false,
+    });
 
   if (error) {
     console.error(`Failed to upload ${bucket} asset`, error.message);
+    await recordSystemEvent({
+      source: "storage-assets",
+      severity: "error",
+      message: `Upload asset ke bucket ${bucket} gagal.`,
+      details: {
+        bucket,
+        path,
+        error: error.message,
+      },
+    });
     return {
       ok: false,
       message: "Upload gambar gagal. Coba lagi sebentar.",

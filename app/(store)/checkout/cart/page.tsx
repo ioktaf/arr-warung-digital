@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { SubmitButton } from "@/components/submit-button";
+import { PaymentBreakdown } from "@/components/store/payment-breakdown";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { parseCartItemsPayload, serializeCartItemsPayload } from "@/lib/cart";
@@ -441,27 +442,16 @@ export default async function CartCheckoutPage({
                       </p>
                     </div>
 
-                    <div className="rounded-[24px] border border-line bg-white/60 p-5">
-                      <p className="text-sm uppercase tracking-[0.22em] text-muted">
-                        Nominal Transfer
-                      </p>
-                      <p className="mt-2 text-3xl font-black">
-                        {formatCurrency(transferAmount)}
-                      </p>
-                      <div className="mt-3 space-y-2 text-sm leading-7 text-muted">
-                        <p>Subtotal keranjang: {formatCurrency(subtotalPrice)}</p>
-                        {promoDiscountAmount > 0 ? (
-                          <p>
-                            Promo {promoCode}: -{formatCurrency(promoDiscountAmount)}
-                          </p>
-                        ) : null}
-                        <p>Total seat: {totalQuantity} seat</p>
-                        <p>Kode unik: {uniqueCode > 0 ? formatUniqueCode(uniqueCode) : "-"}</p>
-                        <p>
-                          Scan QRIS lalu transfer sesuai total gabungan seluruh item di atas.
-                        </p>
-                      </div>
-                    </div>
+                    <PaymentBreakdown
+                      subtotalPrice={subtotalPrice}
+                      promoCode={promoCode}
+                      promoDiscountAmount={promoDiscountAmount}
+                      quantityLabel={`${totalQuantity} seat`}
+                      uniqueCode={uniqueCode}
+                      transferAmount={transferAmount}
+                      contactWhatsappNumber={settings.contactWhatsappNumber}
+                      contactWhatsappLabel={settings.contactWhatsappLabel}
+                    />
 
                     <div className="rounded-[24px] border border-line bg-white/60 p-5">
                       <p className="text-sm uppercase tracking-[0.22em] text-muted">

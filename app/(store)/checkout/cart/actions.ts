@@ -6,8 +6,10 @@ import { redirect } from "next/navigation";
 import { parseCartItemsPayload } from "@/lib/cart";
 import { getProductsByIds } from "@/lib/data";
 import { clampCheckoutQuantity, createCheckoutOrder, parseUniqueCode } from "@/lib/order-checkout";
+import { recordSystemEvent } from "@/lib/system-events";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
+import { notifyAdminPaymentConfirmation } from "@/lib/telegram";
 import { normalizeWhatsappNumber } from "@/lib/utils";
 
 function getTextValue(value: FormDataEntryValue | null) {
@@ -160,6 +162,15 @@ export async function confirmCartPaymentAction(formData: FormData) {
 
     if (uploadError) {
       console.error("Failed to upload proof file", uploadError.message);
+      await recordSystemEvent({
+        source: "checkout-proof-upload",
+        severity: "error",
+        message: "Upload bukti bayar checkout keranjang gagal.",
+        details: {
+          orderId,
+          error: uploadError.message,
+        },
+      });
       searchParams.set("error", "Bukti bayar gagal diupload. Coba ulang lagi.");
       redirect(buildCartCheckoutUrl(searchParams));
     }
@@ -179,9 +190,36 @@ export async function confirmCartPaymentAction(formData: FormData) {
 
   if (error) {
     console.error("Failed to update cart order confirmation", error.message);
+    await recordSystemEvent({
+      source: "checkout-confirmation",
+      severity: "error",
+      message: "Konfirmasi pembayaran checkout keranjang gagal diupdate.",
+      details: {
+        orderId,
+        error: error.message,
+      },
+    });
     searchParams.set("error", "Konfirmasi bayar gagal dikirim.");
     redirect(buildCartCheckoutUrl(searchParams));
   }
+
+  const { data: orderSnapshot } = await supabase
+    .from("orders")
+    .select("total_price")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  await notifyAdminPaymentConfirmation({
+    orderId,
+    buyerName,
+    buyerWa,
+    totalPrice:
+      typeof orderSnapshot?.total_price === "number"
+        ? orderSnapshot.total_price
+        : Number.parseFloat(String(orderSnapshot?.total_price ?? 0)),
+    uniqueCode,
+    paymentNote,
+  });
 
   revalidatePath("/admin");
   searchParams.set("step", "awaiting-verification");

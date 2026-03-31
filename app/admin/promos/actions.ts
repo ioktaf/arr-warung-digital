@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdminSession } from "@/lib/admin-auth";
+import { recordAdminActivity } from "@/lib/admin-audit";
 import {
   createPromoCode,
   deletePromoCode,
@@ -98,6 +99,17 @@ export async function createPromoCodeAction(formData: FormData) {
   }
 
   revalidatePromoRoutes();
+  await recordAdminActivity({
+    action: "promo_created",
+    targetType: "promo_code",
+    targetId: result.promo?.id ?? null,
+    summary: `Promo ${draft.code} ditambahkan.`,
+    details: {
+      discountType: draft.discountType,
+      discountValue: draft.discountValue,
+      isActive: draft.isActive,
+    },
+  });
   redirectToPromos("Kode promo berhasil ditambahkan.");
 }
 
@@ -118,6 +130,17 @@ export async function updatePromoCodeAction(formData: FormData) {
   }
 
   revalidatePromoRoutes();
+  await recordAdminActivity({
+    action: "promo_updated",
+    targetType: "promo_code",
+    targetId: promoId,
+    summary: `Promo ${draft.code} diperbarui.`,
+    details: {
+      discountType: draft.discountType,
+      discountValue: draft.discountValue,
+      isActive: draft.isActive,
+    },
+  });
   redirectToPromos("Perubahan promo berhasil disimpan.");
 }
 
@@ -138,6 +161,17 @@ export async function togglePromoCodeStatusAction(formData: FormData) {
   }
 
   revalidatePromoRoutes();
+  await recordAdminActivity({
+    action: "promo_status_updated",
+    targetType: "promo_code",
+    targetId: promoId,
+    summary: nextIsActive
+      ? "Promo diaktifkan kembali."
+      : "Promo dinonaktifkan.",
+    details: {
+      nextIsActive,
+    },
+  });
   redirectToPromos(
     nextIsActive ? "Promo berhasil diaktifkan." : "Promo berhasil dinonaktifkan.",
   );
@@ -159,5 +193,11 @@ export async function deletePromoCodeAction(formData: FormData) {
   }
 
   revalidatePromoRoutes();
+  await recordAdminActivity({
+    action: "promo_deleted",
+    targetType: "promo_code",
+    targetId: promoId,
+    summary: "Promo dihapus dari dashboard.",
+  });
   redirectToPromos("Promo berhasil dihapus.");
 }

@@ -4,8 +4,10 @@ import {
   isMissingPromoSchemaError,
   resolvePromoCodeForSubtotal,
 } from "@/lib/promo-codes";
+import { recordSystemEvent } from "@/lib/system-events";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
+import { notifyAdminOrderCreated } from "@/lib/telegram";
 import type { Product } from "@/types/domain";
 
 const ACTIVE_ORDER_STATUSES = ["pending", "awaiting_verification", "paid"] as const;
@@ -191,6 +193,14 @@ export async function createCheckoutOrder(
 
   if (uniqueCodeError) {
     console.error("Failed to read used unique codes", uniqueCodeError.message);
+    await recordSystemEvent({
+      source: "order-checkout",
+      severity: "warning",
+      message: "Gagal membaca unique code yang sedang aktif.",
+      details: {
+        error: uniqueCodeError.message,
+      },
+    });
 
     if (isMissingUniqueCodeColumnError(uniqueCodeError.message)) {
       return {
@@ -233,6 +243,16 @@ export async function createCheckoutOrder(
 
   if (orderError || !orderData) {
     console.error("Failed to create order", orderError?.message);
+    await recordSystemEvent({
+      source: "order-checkout",
+      severity: "error",
+      message: "Pembuatan order gagal.",
+      details: {
+        error: orderError?.message ?? "unknown-error",
+        buyerName,
+        buyerWa,
+      },
+    });
     return {
       ok: false,
       mode: "live",
@@ -258,6 +278,15 @@ export async function createCheckoutOrder(
 
   if (itemError) {
     console.error("Failed to create order items", itemError.message);
+    await recordSystemEvent({
+      source: "order-checkout",
+      severity: "error",
+      message: "Penyimpanan order items gagal.",
+      details: {
+        orderId: orderData.id,
+        error: itemError.message,
+      },
+    });
     await supabase.from("orders").delete().eq("id", orderData.id);
 
     return {
@@ -268,6 +297,16 @@ export async function createCheckoutOrder(
         : "Item order gagal disimpan. Coba submit lagi.",
     };
   }
+
+  await notifyAdminOrderCreated({
+    orderId: orderData.id,
+    buyerName,
+    buyerWa,
+    totalPrice,
+    totalQuantity: normalizedItems.reduce((sum, item) => sum + item.quantity, 0),
+    promoCode,
+    itemSummary: normalizedItems.map((item) => `${item.quantity}x ${item.product.title}`),
+  });
 
   return {
     ok: true,

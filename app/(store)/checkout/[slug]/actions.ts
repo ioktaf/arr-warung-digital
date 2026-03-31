@@ -9,8 +9,10 @@ import {
   createCheckoutOrder,
   parseUniqueCode,
 } from "@/lib/order-checkout";
+import { recordSystemEvent } from "@/lib/system-events";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hasServiceRoleSupabaseEnv } from "@/lib/supabase/env";
+import { notifyAdminPaymentConfirmation } from "@/lib/telegram";
 import { normalizeWhatsappNumber } from "@/lib/utils";
 
 function getTextValue(value: FormDataEntryValue | null) {
@@ -173,6 +175,15 @@ export async function confirmPaymentAction(formData: FormData) {
 
     if (uploadError) {
       console.error("Failed to upload proof file", uploadError.message);
+      await recordSystemEvent({
+        source: "checkout-proof-upload",
+        severity: "error",
+        message: "Upload bukti bayar checkout produk gagal.",
+        details: {
+          orderId,
+          error: uploadError.message,
+        },
+      });
       searchParams.set("error", "Bukti bayar gagal diupload. Coba ulang lagi.");
       redirect(buildCheckoutUrl(slug, searchParams));
     }
@@ -192,9 +203,36 @@ export async function confirmPaymentAction(formData: FormData) {
 
   if (error) {
     console.error("Failed to update order confirmation", error.message);
+    await recordSystemEvent({
+      source: "checkout-confirmation",
+      severity: "error",
+      message: "Konfirmasi pembayaran checkout produk gagal diupdate.",
+      details: {
+        orderId,
+        error: error.message,
+      },
+    });
     searchParams.set("error", "Konfirmasi bayar gagal dikirim.");
     redirect(buildCheckoutUrl(slug, searchParams));
   }
+
+  const { data: orderSnapshot } = await supabase
+    .from("orders")
+    .select("total_price")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  await notifyAdminPaymentConfirmation({
+    orderId,
+    buyerName,
+    buyerWa,
+    totalPrice:
+      typeof orderSnapshot?.total_price === "number"
+        ? orderSnapshot.total_price
+        : Number.parseFloat(String(orderSnapshot?.total_price ?? 0)),
+    uniqueCode,
+    paymentNote,
+  });
 
   revalidatePath("/admin");
   searchParams.set("step", "awaiting-verification");

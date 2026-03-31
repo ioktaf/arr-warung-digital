@@ -10,11 +10,17 @@ import {
   updateMockStoreSettings,
 } from "@/lib/mock-data";
 import { getOrderStatusUpdatePayload } from "@/lib/order-status";
+import { recordSystemEvent } from "@/lib/system-events";
 import {
   defaultStoreSettings,
   extractStoreSettingsInput,
   normalizeStoreSettingsInput,
 } from "@/lib/store-settings";
+import {
+  getCachedCatalogProductsFromServiceRole,
+  getCachedProductBySlugFromServiceRole,
+  getCachedStoreSettingsFromServiceRole,
+} from "@/lib/public-store-cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   hasPublicSupabaseEnv,
@@ -598,6 +604,14 @@ async function resolveProofImageUrl(path: string | null) {
 }
 
 export async function getStoreSettings() {
+  if (hasServiceRoleSupabaseEnv()) {
+    const cachedSettings = await getCachedStoreSettingsFromServiceRole();
+
+    if (cachedSettings) {
+      return cachedSettings;
+    }
+  }
+
   if (!hasPublicSupabaseEnv()) {
     return mockStoreSettings;
   }
@@ -710,6 +724,14 @@ export async function updateStoreSettings(
 }
 
 export async function getCatalogProducts() {
+  if (hasServiceRoleSupabaseEnv()) {
+    const cachedProducts = await getCachedCatalogProductsFromServiceRole();
+
+    if (cachedProducts.length) {
+      return cachedProducts;
+    }
+  }
+
   if (!hasPublicSupabaseEnv()) {
     return mockProducts.filter((product) => product.isActive);
   }
@@ -1110,6 +1132,14 @@ export async function getProductBySlug(slug: string) {
   const normalizedSlug = slug.trim().toLowerCase();
   const mockProduct = mockProducts.find((product) => product.slug === normalizedSlug);
 
+  if (hasServiceRoleSupabaseEnv()) {
+    const cachedProduct = await getCachedProductBySlugFromServiceRole(normalizedSlug);
+
+    if (cachedProduct) {
+      return cachedProduct;
+    }
+  }
+
   if (!hasPublicSupabaseEnv()) {
     return mockProduct ?? null;
   }
@@ -1240,6 +1270,16 @@ export async function updateOrderStatus(orderId: string, nextStatus: OrderStatus
 
   if (error) {
     console.error("Failed to update order status", error.message);
+    await recordSystemEvent({
+      source: "admin-order-status",
+      severity: "error",
+      message: "Supabase gagal mengubah status order.",
+      details: {
+        orderId,
+        nextStatus,
+        error: error.message,
+      },
+    });
     return {
       ok: false,
       mode: "live" as const,

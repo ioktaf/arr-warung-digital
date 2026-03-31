@@ -6,8 +6,6 @@ import { Card } from "@/components/ui/card";
 import { getAdminProducts } from "@/lib/data";
 import { getFirstValue } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
-
 type AdminProductsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };

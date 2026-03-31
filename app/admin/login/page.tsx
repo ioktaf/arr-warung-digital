@@ -15,6 +15,8 @@ type AdminLoginPageProps = {
 
 const errorMessages = {
   invalid: "Password admin tidak cocok. Coba lagi.",
+  "rate-limit":
+    "Terlalu banyak percobaan login gagal. Tunggu sekitar 15 menit lalu coba lagi.",
   setup:
     "ADMIN_ACCESS_PASSWORD atau ADMIN_SESSION_SECRET belum diisi di environment.",
 } as const;
@@ -80,10 +82,11 @@ export default async function AdminLoginPage({
               </div>
             </div>
 
-            <div className="space-y-3 text-sm leading-7 text-muted">
+              <div className="space-y-3 text-sm leading-7 text-muted">
               <p>1. Isi password admin yang disimpan di environment Vercel.</p>
               <p>2. Setelah login, kamu bisa masuk ke board order, panel produk, dan settings storefront.</p>
-              <p>3. Logout akan menutup sesi admin di browser ini.</p>
+              <p>3. Terlalu banyak percobaan gagal akan memblok login sementara di browser ini.</p>
+              <p>4. Logout akan menutup sesi admin di browser ini.</p>
             </div>
           </Card>
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Package2, Settings2, Store, TicketPercent } from "lucide-react";
+import { Activity, LayoutDashboard, Package2, Settings2, Store, TicketPercent } from "lucide-react";
 
 import { logoutAdminAction } from "@/app/admin/login/actions";
 import { SiteBrand } from "@/components/layout/site-brand";
@@ -13,10 +13,9 @@ const adminLinks = [
   { href: "/admin/products", label: "Products", icon: Package2 },
   { href: "/admin/promos", label: "Promos", icon: TicketPercent },
   { href: "/admin/settings", label: "Settings", icon: Settings2 },
+  { href: "/admin/system", label: "System", icon: Activity },
   { href: "/", label: "Storefront", icon: Store },
 ];
-
-export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({
   children,

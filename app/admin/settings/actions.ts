@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { requireAdminSession } from "@/lib/admin-auth";
+import { recordAdminActivity } from "@/lib/admin-audit";
+import { revalidateStoreSettingsCache } from "@/lib/cache-tags";
 import { updateStoreSettings } from "@/lib/data";
 import { getImageFile, uploadBrandLogo } from "@/lib/storage-assets";
 import { defaultStoreSettingsInput } from "@/lib/store-settings";
@@ -26,6 +28,7 @@ function createSettingsActionState(
 }
 
 function revalidateSettingsRoutes() {
+  revalidateStoreSettingsCache();
   revalidatePath("/", "layout");
   revalidatePath("/", "page");
   revalidatePath("/cart");
@@ -203,6 +206,17 @@ export async function updateStorefrontSettingsAction(
   }
 
   revalidateSettingsRoutes();
+  await recordAdminActivity({
+    action: "storefront_settings_updated",
+    targetType: "store_settings",
+    targetId: result.settings?.id ?? null,
+    summary: "Template website publik diperbarui dari dashboard admin.",
+    details: {
+      brandName: nextInput.brandName,
+      hasUploadedLogo: Boolean(logoFile),
+      contactWhatsappNumber: nextInput.contactWhatsappNumber || "",
+    },
+  });
   return createSettingsActionState(
     result.mode === "mock"
       ? "Pengaturan storefront tersimpan di mode demo. Supabase live belum aktif penuh."
@@ -227,6 +241,16 @@ export async function updatePaymentSettingsAction(
   }
 
   revalidateSettingsRoutes();
+  await recordAdminActivity({
+    action: "payment_settings_updated",
+    targetType: "store_settings",
+    targetId: result.settings?.id ?? null,
+    summary: "Pengaturan pembayaran QRIS diperbarui.",
+    details: {
+      paymentDisplayLabel: getTextValue(formData.get("paymentDisplayLabel")),
+      merchantName: getTextValue(formData.get("paymentMerchantName")),
+    },
+  });
   return createSettingsActionState(
     result.mode === "mock"
       ? "Pengaturan pembayaran tersimpan di mode demo. Supabase live belum aktif penuh."

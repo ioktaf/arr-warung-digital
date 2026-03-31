@@ -3,8 +3,16 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const ADMIN_SESSION_COOKIE_NAME = "admin_session";
+export const ADMIN_SESSION_COOKIE_NAME = "admin_session";
+const ADMIN_LOGIN_GUARD_COOKIE_NAME = "admin_login_guard";
 const ADMIN_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+const ADMIN_LOGIN_FAILURE_LIMIT = 5;
+const ADMIN_LOGIN_BLOCK_TTL_MS = 1000 * 60 * 15;
+
+type AdminLoginGuardState = {
+  failures: number;
+  blockedUntil: number | null;
+};
 
 function getAdminAuthEnv() {
   return {
@@ -26,6 +34,57 @@ function safeEqual(left: string, right: string) {
   }
 
   return timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function encodeLoginGuardState(state: AdminLoginGuardState, secret: string) {
+  const failures = String(Math.max(0, Math.floor(state.failures)));
+  const blockedUntil = state.blockedUntil ? String(state.blockedUntil) : "0";
+  const raw = `${failures}.${blockedUntil}`;
+  const signature = signValue(raw, secret);
+  return `${raw}.${signature}`;
+}
+
+function parseLoginGuardState(
+  value: string | undefined,
+  secret: string | undefined,
+): AdminLoginGuardState {
+  if (!value || !secret) {
+    return {
+      failures: 0,
+      blockedUntil: null,
+    };
+  }
+
+  const [failuresRaw, blockedUntilRaw, signature] = value.split(".");
+
+  if (!failuresRaw || !blockedUntilRaw || !signature) {
+    return {
+      failures: 0,
+      blockedUntil: null,
+    };
+  }
+
+  const raw = `${failuresRaw}.${blockedUntilRaw}`;
+  const expectedSignature = signValue(raw, secret);
+
+  if (!safeEqual(signature, expectedSignature)) {
+    return {
+      failures: 0,
+      blockedUntil: null,
+    };
+  }
+
+  const failures = Number.parseInt(failuresRaw, 10);
+  const blockedUntilValue = Number.parseInt(blockedUntilRaw, 10);
+  const blockedUntil =
+    Number.isFinite(blockedUntilValue) && blockedUntilValue > Date.now()
+      ? blockedUntilValue
+      : null;
+
+  return {
+    failures: Number.isFinite(failures) ? Math.max(0, failures) : 0,
+    blockedUntil,
+  };
 }
 
 export function hasAdminAuthEnv() {
@@ -80,6 +139,18 @@ export function isValidAdminSessionToken(token: string | null | undefined) {
   return safeEqual(signature, expectedSignature);
 }
 
+export async function getAdminLoginGuardState() {
+  const cookieStore = await cookies();
+  const { secret } = getAdminAuthEnv();
+  const rawState = cookieStore.get(ADMIN_LOGIN_GUARD_COOKIE_NAME)?.value;
+  const state = parseLoginGuardState(rawState, secret);
+
+  return {
+    ...state,
+    isBlocked: Boolean(state.blockedUntil && state.blockedUntil > Date.now()),
+  };
+}
+
 export async function isAdminAuthenticated() {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value;
@@ -117,4 +188,63 @@ export async function clearAdminSessionCookie() {
     path: "/",
     expires: new Date(0),
   });
+}
+
+export async function clearAdminLoginGuardState() {
+  const cookieStore = await cookies();
+
+  cookieStore.set(ADMIN_LOGIN_GUARD_COOKIE_NAME, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    expires: new Date(0),
+  });
+}
+
+export async function registerAdminLoginFailure() {
+  const cookieStore = await cookies();
+  const { secret } = getAdminAuthEnv();
+
+  if (!secret) {
+    return {
+      failures: 1,
+      blockedUntil: null,
+      isBlocked: false,
+    };
+  }
+
+  const currentState = parseLoginGuardState(
+    cookieStore.get(ADMIN_LOGIN_GUARD_COOKIE_NAME)?.value,
+    secret,
+  );
+  const nextFailures = currentState.blockedUntil ? 1 : currentState.failures + 1;
+  const blockedUntil =
+    nextFailures >= ADMIN_LOGIN_FAILURE_LIMIT
+      ? Date.now() + ADMIN_LOGIN_BLOCK_TTL_MS
+      : null;
+
+  cookieStore.set(
+    ADMIN_LOGIN_GUARD_COOKIE_NAME,
+    encodeLoginGuardState(
+      {
+        failures: nextFailures,
+        blockedUntil,
+      },
+      secret,
+    ),
+    {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      expires: new Date(Date.now() + ADMIN_LOGIN_BLOCK_TTL_MS),
+    },
+  );
+
+  return {
+    failures: nextFailures,
+    blockedUntil,
+    isBlocked: Boolean(blockedUntil),
+  };
 }

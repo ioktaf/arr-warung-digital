@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdminSession } from "@/lib/admin-auth";
+import { recordAdminActivity } from "@/lib/admin-audit";
+import { revalidatePublicCatalogCache } from "@/lib/cache-tags";
 import {
   createProduct,
   deleteProduct,
@@ -42,8 +44,10 @@ function redirectToProducts(notice: string, tone: NoticeTone = "success"): never
 
 function revalidateProductRoutes(previousSlug?: string | null, nextSlug?: string | null) {
   revalidatePath("/");
+  revalidatePath("/cart");
   revalidatePath("/admin");
   revalidatePath("/admin/products");
+  revalidatePublicCatalogCache([previousSlug, nextSlug]);
 
   if (previousSlug) {
     revalidatePath(`/checkout/${previousSlug}`);
@@ -106,6 +110,17 @@ export async function createProductAction(formData: FormData) {
   }
 
   revalidateProductRoutes(undefined, result.product?.slug ?? null);
+  await recordAdminActivity({
+    action: "product_created",
+    targetType: "product",
+    targetId: result.product?.id ?? null,
+    summary: `Produk ${draft.title} ditambahkan.`,
+    details: {
+      slug: result.product?.slug ?? draft.slug,
+      price: draft.price,
+      stock: draft.stock,
+    },
+  });
   redirectToProducts("Produk baru berhasil ditambahkan.");
 }
 
@@ -141,6 +156,18 @@ export async function updateProductAction(formData: FormData) {
   }
 
   revalidateProductRoutes(result.previousSlug, result.product?.slug ?? draft.slug);
+  await recordAdminActivity({
+    action: "product_updated",
+    targetType: "product",
+    targetId: productId,
+    summary: `Produk ${draft.title} diperbarui.`,
+    details: {
+      previousSlug: result.previousSlug,
+      nextSlug: result.product?.slug ?? draft.slug,
+      price: draft.price,
+      stock: draft.stock,
+    },
+  });
   redirectToProducts("Perubahan produk berhasil disimpan.");
 }
 
@@ -164,6 +191,18 @@ export async function toggleProductStatusAction(formData: FormData) {
   }
 
   revalidateProductRoutes(result.previousSlug, result.product?.slug ?? result.previousSlug);
+  await recordAdminActivity({
+    action: "product_status_updated",
+    targetType: "product",
+    targetId: productId,
+    summary: nextIsActive
+      ? "Produk diaktifkan kembali."
+      : "Produk dinonaktifkan dari katalog.",
+    details: {
+      nextIsActive,
+      slug: result.product?.slug ?? result.previousSlug,
+    },
+  });
   redirectToProducts(
     nextIsActive ? "Produk berhasil diaktifkan." : "Produk berhasil dinonaktifkan.",
     "success",
@@ -189,5 +228,14 @@ export async function deleteProductAction(formData: FormData) {
   }
 
   revalidateProductRoutes(result.previousSlug, undefined);
+  await recordAdminActivity({
+    action: "product_deleted",
+    targetType: "product",
+    targetId: productId,
+    summary: "Produk dihapus dari dashboard.",
+    details: {
+      previousSlug: result.previousSlug,
+    },
+  });
   redirectToProducts("Produk berhasil dihapus.", "success");
 }
